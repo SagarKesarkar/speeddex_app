@@ -1,0 +1,16 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+
+formatter:
+  page_width: 100
+
+linter:
+  rules:
+    - prefer_single_quotes
+    - avoid_print
+    - always_declare_return_types
