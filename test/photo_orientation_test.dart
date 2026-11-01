@@ -48,6 +48,6 @@ void main() {
   test('caps the longest edge', () {
     final big = img.Image(width: 3000, height: 1500);
     final out = img.decodeJpg(uprightJpeg(img.encodeJpg(big), HeldAs.portrait))!;
-    expect((out.width, out.height), (1920, 960));
+    expect((out.width, out.height), (1600, 800));
   });
 }

@@ -374,6 +374,43 @@ void main() {
       final outcome = await repo.identify(Uint8List(3), localPath: '/tmp/b.jpg');
       expect((outcome as Identified).candidate.model, 'Creta');
     });
+
+    test('uploads the thumbnail before the photo; a failed thumbnail is skipped', () async {
+      final puts = <String>[];
+      final api = client(
+        (req) async => switch ((req.method, req.url.path)) {
+          ('POST', '/v1/captures/upload-session') => _json(201, {
+            'captureId': 6,
+            'upload': {'url': 'https://api.example.com/v1/uploads/k.jpg?sig=s'},
+            'thumbnailUpload': {'url': 'https://api.example.com/v1/uploads/k_t.jpg?sig=t'},
+          }),
+          ('PUT', final path) when path.endsWith('_t.jpg') => () {
+            puts.add(path);
+            return _json(500, _err('INTERNAL'));
+          }(),
+          ('PUT', final path) => () {
+            puts.add(path);
+            return _json(200, {'status': 'uploaded'});
+          }(),
+          ('POST', '/v1/captures/6/identify') => _json(202, {'status': 'processing'}),
+          ('GET', '/v1/captures/6') => _json(200, {
+            'captureId': 6,
+            'status': 'identified',
+            'confidence': 0.9,
+            'candidate': candidate,
+          }),
+          _ => _json(404, _err('RESOURCE_NOT_FOUND')),
+        },
+      );
+      final repo = HttpCaptureRepository(api, const ApiMappers(_identity));
+      final outcome = await repo.identify(
+        Uint8List(3),
+        localPath: '/tmp/c.jpg',
+        thumbnail: Uint8List(2),
+      );
+      expect(outcome, isA<Identified>());
+      expect(puts, ['/v1/uploads/k_t.jpg', '/v1/uploads/k.jpg']);
+    });
   });
 }
 

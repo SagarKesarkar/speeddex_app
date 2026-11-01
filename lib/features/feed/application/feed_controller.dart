@@ -105,6 +105,12 @@ class FeedController extends Notifier<FeedState> {
     );
     try {
       await ref.read(feedRepositoryProvider).setLiked(postId, liked: liked);
+      // Liking counts towards today's goals, which can pay XP.
+      if (liked) {
+        ref
+          ..invalidate(dailyGoalsProvider)
+          ..invalidate(profileProvider);
+      }
       return true;
     } catch (_) {
       _replace(before);
@@ -113,6 +119,9 @@ class FeedController extends Notifier<FeedState> {
   }
 
   void bumpComments(String postId) {
+    ref
+      ..invalidate(dailyGoalsProvider)
+      ..invalidate(profileProvider);
     final p = state.posts.firstWhere((p) => p.id == postId);
     _replace(p.copyWith(commentCount: p.commentCount + 1));
   }

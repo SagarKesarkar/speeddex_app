@@ -129,6 +129,7 @@ class CarCard {
     this.xp = 0,
     this.imagePath,
     this.imageUrl,
+    this.thumbUrl,
     this.about,
   });
 
@@ -173,6 +174,9 @@ class CarCard {
   /// Controlled delivery URL from the backend (never a private original).
   final String? imageUrl;
 
+  /// Small copy of the photo for grids and lists. Null on older cards.
+  final String? thumbUrl;
+
   /// Model summary with attribution; present on detail responses only.
   final CarAbout? about;
 
@@ -212,6 +216,7 @@ class CarCard {
     xp: xp,
     imagePath: imagePath ?? this.imagePath,
     imageUrl: imageUrl,
+    thumbUrl: thumbUrl,
     about: about,
   );
 }

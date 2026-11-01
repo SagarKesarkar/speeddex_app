@@ -1,0 +1,7 @@
+{
+  "API_BASE_URL": "https://speeddex-backend-8ppa-one.vercel.app",
+  "FIREBASE_API_KEY": "AIza...",
+  "FIREBASE_APP_ID": "1:123456789012:android:abc123def456",
+  "FIREBASE_SENDER_ID": "123456789012",
+  "FIREBASE_PROJECT_ID": "speeddex-12345"
+}

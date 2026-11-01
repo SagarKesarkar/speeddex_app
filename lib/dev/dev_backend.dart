@@ -5,6 +5,7 @@ import '../core/errors/app_failure.dart';
 import '../core/security/token_store.dart';
 import '../data/repositories.dart';
 import '../domain/car_card.dart';
+import '../domain/goals.dart';
 import '../domain/profile.dart';
 import '../domain/rarity_tier.dart';
 import '../domain/social.dart';
@@ -67,12 +68,11 @@ class DevStore {
     following: 87,
     issuedAt: DateTime(2026, 10, 21),
     bio: 'Weekend spotter. Collecting every flat-six I can find.',
-    badges: [
-      SpotterBadge(id: 'b1', name: 'First Catch', earnedAt: DateTime(2026, 10, 21)),
-      SpotterBadge(id: 'b2', name: 'Royal Court', earnedAt: DateTime(2026, 10, 24)),
-      SpotterBadge(id: 'b3', name: 'Five-Day Streak', earnedAt: DateTime(2026, 10, 26)),
-    ],
+    badges: devBadges.where((b) => b.earned).toList(),
+    allBadges: devBadges,
   );
+
+  int devLikesToday = 1;
 
   UserSummary get viewer => UserSummary(
     id: profile.id,
@@ -426,7 +426,11 @@ class DevCaptureRepository implements CaptureRepository {
   static const _sequence = [('306', 0.93), ('101', 0.95), ('610', 0.79), ('711', 0.91)];
 
   @override
-  Future<IdentifyOutcome> identify(Uint8List jpegBytes, {required String localPath}) async {
+  Future<IdentifyOutcome> identify(
+    Uint8List jpegBytes, {
+    required String localPath,
+    Uint8List? thumbnail,
+  }) async {
     await _store.latency(2200);
     if (_store._scansToday >= DevStore.dailyScanLimit + _store._extraScans) {
       throw const DailyScanLimitFailure();
@@ -550,6 +554,57 @@ class DevProfileRepository implements ProfileRepository {
     await _store.latency(250);
     return Wallet(coins: _store._coins, adsWatchedToday: 0);
   }
+
+  @override
+  Future<DailyGoals> dailyGoals() async {
+    await _store.latency(250);
+    final catches = _store._scansToday.clamp(0, 1);
+    final likes = _store.devLikesToday.clamp(0, 3);
+    final goals = [
+      DailyGoal(
+        id: 'catch',
+        title: 'Catch a car',
+        description: 'Add a new car to your Garage.',
+        progress: catches,
+        target: 1,
+        xp: 25,
+        completed: catches >= 1,
+      ),
+      DailyGoal(
+        id: 'like',
+        title: 'Like 3 catches',
+        description: "Like other players' cars in the feed.",
+        progress: likes,
+        target: 3,
+        xp: 10,
+        completed: likes >= 3,
+      ),
+      const DailyGoal(
+        id: 'comment',
+        title: 'Leave a comment',
+        description: "Comment on another player's car.",
+        progress: 0,
+        target: 1,
+        xp: 10,
+        completed: false,
+      ),
+    ];
+    final now = DateTime.now().toUtc();
+    return DailyGoals(
+      goals: goals,
+      bonusTitle: 'Complete every goal',
+      bonusXp: 25,
+      bonusCompleted: goals.every((g) => g.completed),
+      xpEarnedToday: goals.where((g) => g.completed).fold(0, (n, g) => n + g.xp),
+      resetsAt: DateTime.utc(now.year, now.month, now.day + 1),
+    );
+  }
+
+  @override
+  Future<void> registerPushToken(String token, {required String platform}) async {}
+
+  @override
+  Future<void> unregisterPushToken(String token) async {}
 }
 
 /// A small built-in location list for development mode; the real API serves
@@ -701,3 +756,75 @@ class DevAdsRepository implements AdsRepository {
     }
   }
 }
+
+/// Sample badge case for development mode: a few earned, the rest in progress.
+final devBadges = [
+  SpotterBadge(
+    id: 'royal_court',
+    name: 'Royal Court',
+    description: 'Catch a Royal car or rarer.',
+    icon: 'crown',
+    grade: BadgeGrade.silver,
+    earnedAt: DateTime(2026, 10, 24),
+  ),
+  SpotterBadge(
+    id: 'first_catch',
+    name: 'First Catch',
+    description: 'Catch your first car.',
+    icon: 'camera',
+    earnedAt: DateTime(2026, 10, 21),
+  ),
+  const SpotterBadge(
+    id: 'collector_10',
+    name: 'Collector',
+    description: 'Have 10 cars in your Garage.',
+    icon: 'collection',
+    earned: false,
+    progress: 6,
+    target: 10,
+  ),
+  const SpotterBadge(
+    id: 'rare_hunter',
+    name: 'Rare Hunter',
+    description: 'Catch a Rare car or rarer.',
+    icon: 'gem',
+    grade: BadgeGrade.silver,
+    earned: false,
+  ),
+  const SpotterBadge(
+    id: 'living_legend',
+    name: 'Living Legend',
+    description: 'Catch a Legendary or Mythic car.',
+    icon: 'flame',
+    grade: BadgeGrade.gold,
+    earned: false,
+  ),
+  const SpotterBadge(
+    id: 'myth_maker',
+    name: 'Myth Maker',
+    description: 'Catch a Mythic car.',
+    icon: 'star',
+    grade: BadgeGrade.platinum,
+    earned: false,
+  ),
+  const SpotterBadge(
+    id: 'brand_explorer',
+    name: 'Brand Explorer',
+    description: 'Catch cars from 10 different brands.',
+    icon: 'globe',
+    grade: BadgeGrade.silver,
+    earned: false,
+    progress: 4,
+    target: 10,
+  ),
+  const SpotterBadge(
+    id: 'crowd_favourite',
+    name: 'Crowd Favourite',
+    description: 'Get 50 likes on your catches.',
+    icon: 'heart',
+    grade: BadgeGrade.gold,
+    earned: false,
+    progress: 31,
+    target: 50,
+  ),
+];

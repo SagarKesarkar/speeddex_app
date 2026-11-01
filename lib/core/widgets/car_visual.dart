@@ -9,10 +9,13 @@ import '../theme/sd_colors.dart';
 /// Shows the capture photo when one exists, otherwise a studio-lit vector
 /// silhouette for the car's body style. No third-party car artwork is bundled.
 class CarVisual extends StatelessWidget {
-  const CarVisual({super.key, required this.card, this.fit = BoxFit.cover});
+  const CarVisual({super.key, required this.card, this.fit = BoxFit.cover, this.small = false});
 
   final CarCard card;
   final BoxFit fit;
+
+  /// Shown small (grids, lists): uses the card's thumbnail when it has one.
+  final bool small;
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +23,9 @@ class CarVisual extends StatelessWidget {
     Widget image;
     if (card.imagePath != null) {
       image = Image.file(File(card.imagePath!), fit: fit, errorBuilder: (_, _, _) => fallback);
-    } else if (card.imageUrl != null) {
+    } else if ((small ? card.thumbUrl ?? card.imageUrl : card.imageUrl) case final url?) {
       image = Image.network(
-        card.imageUrl!,
+        url,
         fit: fit,
         errorBuilder: (_, _, _) => fallback,
         loadingBuilder: (c, child, progress) => progress == null ? child : fallback,

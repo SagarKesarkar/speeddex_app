@@ -1,14 +1,50 @@
 import 'rarity_tier.dart';
 import 'social.dart';
 
+/// How prestigious a badge is; drives its medal colour.
+enum BadgeGrade {
+  bronze,
+  silver,
+  gold,
+  platinum;
+
+  static BadgeGrade parse(String? raw) =>
+      values.firstWhere((g) => g.name == raw, orElse: () => BadgeGrade.bronze);
+}
+
 class SpotterBadge {
-  const SpotterBadge({required this.id, required this.name, this.earnedAt});
+  const SpotterBadge({
+    required this.id,
+    required this.name,
+    this.earnedAt,
+    this.description = '',
+    this.icon = '',
+    this.grade = BadgeGrade.bronze,
+    this.earned = true,
+    this.progress = 0,
+    this.target = 1,
+  });
 
   final String id;
   final String name;
 
-  /// Null when the server derives the badge from milestones without a date.
+  /// Null when the server can't tell when it was earned (likes, followers).
   final DateTime? earnedAt;
+
+  /// How to earn it, e.g. "Have 10 cars in your Garage."
+  final String description;
+
+  /// Icon key from the server: camera, collection, crown, gem, flame, star,
+  /// globe, heart or people.
+  final String icon;
+  final BadgeGrade grade;
+  final bool earned;
+
+  /// Towards [target]; equal to it once earned.
+  final int progress;
+  final int target;
+
+  double get fraction => target <= 0 ? 1 : (progress / target).clamp(0, 1).toDouble();
 }
 
 /// A country from the location picker (ISO 3166-1 alpha-2 code).
@@ -63,6 +99,7 @@ class UserProfile {
     this.emailVerified = true,
     this.region = const UserRegion(),
     this.badges = const [],
+    this.allBadges = const [],
   });
 
   final String id;
@@ -86,7 +123,15 @@ class UserProfile {
 
   /// Location used for country/state/city rankings. Set in Edit profile.
   final UserRegion region;
+
+  /// Earned badges, newest first.
   final List<SpotterBadge> badges;
+
+  /// Every badge, earned first, with progress on the rest. Falls back to
+  /// [badges] for a server that doesn't send the full list.
+  final List<SpotterBadge> allBadges;
+
+  List<SpotterBadge> get badgeCase => allBadges.isEmpty ? badges : allBadges;
 
   double get levelProgress {
     final span = xpNextLevel - xpLevelStart;
@@ -112,6 +157,7 @@ class UserProfile {
         emailVerified: emailVerified,
         region: region ?? this.region,
         badges: badges,
+        allBadges: allBadges,
       );
 }
 

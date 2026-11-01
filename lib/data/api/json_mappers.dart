@@ -1,4 +1,5 @@
 import '../../domain/car_card.dart';
+import '../../domain/goals.dart';
 import '../../domain/profile.dart';
 import '../../domain/rarity_tier.dart';
 import '../../domain/social.dart';
@@ -101,6 +102,7 @@ class ApiMappers {
       xp: _int(j['xp']),
       imagePath: localImagePath,
       imageUrl: j['imageUrl'] == null ? null : rebaseUrl(j['imageUrl'] as String),
+      thumbUrl: j['thumbUrl'] == null ? null : rebaseUrl(j['thumbUrl'] as String),
     );
   }
 
@@ -163,13 +165,47 @@ class ApiMappers {
               ),
       ),
       badges: _badges(j['badges']),
+      allBadges: _badges(j['allBadges']),
     );
   }
 
   static List<SpotterBadge> _badges(Object? list) => [
     for (final b in (list as List?) ?? const [])
-      SpotterBadge(id: (b as Map)['id'] as String, name: b['name'] as String),
+      SpotterBadge(
+        id: (b as Map)['id'] as String,
+        name: b['name'] as String,
+        description: b['description'] as String? ?? '',
+        icon: b['icon'] as String? ?? '',
+        grade: BadgeGrade.parse(b['grade'] as String?),
+        earnedAt: b['earnedAt'] == null ? null : DateTime.tryParse(b['earnedAt'] as String),
+        earned: b['earned'] as bool? ?? true,
+        progress: (b['progress'] as num?)?.toInt() ?? 1,
+        target: (b['target'] as num?)?.toInt() ?? 1,
+      ),
   ];
+
+  DailyGoals dailyGoals(Json j) {
+    final bonus = (j['bonus'] as Map).cast<String, Object?>();
+    return DailyGoals(
+      goals: [
+        for (final g in (j['goals'] as List).cast<Map>())
+          DailyGoal(
+            id: g['goalId'] as String,
+            title: g['title'] as String,
+            description: g['description'] as String? ?? '',
+            progress: _int(g['progress']),
+            target: _int(g['target']),
+            xp: _int(g['xp']),
+            completed: g['completed'] == true,
+          ),
+      ],
+      bonusTitle: bonus['title'] as String,
+      bonusXp: _int(bonus['xp']),
+      bonusCompleted: bonus['completed'] == true,
+      xpEarnedToday: _int(j['xpEarnedToday']),
+      resetsAt: _date(j['resetsAt']),
+    );
+  }
 
   PublicProfile publicProfile(Json j) => PublicProfile(
     user: user(j),

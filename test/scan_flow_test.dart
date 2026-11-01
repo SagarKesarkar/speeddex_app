@@ -21,15 +21,24 @@ class _Preparer implements PhotoPreparer {
     if (failing) throw StateError('detector unavailable');
     return '$rawPath-ready';
   }
+
+  @override
+  Future<Uint8List?> thumbnail(Uint8List prepared) async => Uint8List.fromList([7, 7, 7]);
 }
 
 /// Records which local photos were sent.
 class _Captures implements CaptureRepository {
   final sent = <String>[];
+  final thumbnails = <Uint8List?>[];
 
   @override
-  Future<IdentifyOutcome> identify(Uint8List jpegBytes, {required String localPath}) async {
+  Future<IdentifyOutcome> identify(
+    Uint8List jpegBytes, {
+    required String localPath,
+    Uint8List? thumbnail,
+  }) async {
     sent.add(localPath);
+    thumbnails.add(thumbnail);
     return const Rejected('Not a car');
   }
 
@@ -81,6 +90,7 @@ void main() {
     expect(seen[1], isA<ScanIdentifying>());
     expect(preparer.calls, [(raw, HeldAs.landscapeLeft)]);
     expect(captures.sent, ['$raw-ready']); // never the original
+    expect(captures.thumbnails.single, [7, 7, 7]); // the small copy goes with it
   });
 
   test('if the privacy check fails nothing is sent, and trying again prepares it again', () async {

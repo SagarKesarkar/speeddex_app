@@ -32,7 +32,7 @@ HeldAs heldAs(double x, double y) {
 /// landscape and the image is still portrait, it is rotated to match. An
 /// image that is already landscape (a camera that handled it) is left alone.
 /// Pure and synchronous so it can run in a background isolate.
-Uint8List uprightJpeg(Uint8List jpeg, HeldAs held, {int maxEdge = 1920}) {
+Uint8List uprightJpeg(Uint8List jpeg, HeldAs held, {int maxEdge = 1600}) {
   final decoded = img.decodeJpg(jpeg);
   if (decoded == null) return jpeg; // not ours to fix; the server validates
   var image = img.bakeOrientation(decoded);
@@ -48,7 +48,44 @@ Uint8List uprightJpeg(Uint8List jpeg, HeldAs held, {int maxEdge = 1920}) {
         : img.copyResize(image, height: maxEdge);
   }
   image.exif = img.ExifData();
-  return img.encodeJpg(image, quality: 90);
+  return img.encodeJpg(image, quality: photoQuality);
+}
+
+/// JPEG quality of the photo that is sent. 80 looks the same as 90 on a
+/// phone screen and is about 40% smaller to upload and store.
+const photoQuality = 80;
+
+/// Shorter side of the small copy shown in Garage grids: sharp in a
+/// 220-point tile on a 3x screen, and about a tenth of the photo's size.
+const thumbnailShortSide = 480;
+
+/// The small copy of a prepared photo, for Garage grids. Null if it can't be
+/// made: the full photo is then used everywhere.
+Future<Uint8List?> thumbnailJpeg(Uint8List jpeg) async {
+  try {
+    return await FlutterImageCompress.compressWithList(
+      jpeg,
+      minWidth: thumbnailShortSide,
+      minHeight: thumbnailShortSide,
+      quality: 72,
+      keepExif: false,
+    );
+  } catch (_) {
+    try {
+      return await Isolate.run(() => _thumbnailInDart(jpeg));
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+Uint8List? _thumbnailInDart(Uint8List jpeg) {
+  final image = img.decodeJpg(jpeg);
+  if (image == null) return null;
+  final small = image.width <= image.height
+      ? img.copyResize(image, width: thumbnailShortSide)
+      : img.copyResize(image, height: thumbnailShortSide);
+  return img.encodeJpg(small, quality: 72);
 }
 
 /// [uprightJpeg] on a background isolate. Top-level on purpose: a closure
@@ -84,7 +121,7 @@ Future<Uint8List> _native(Uint8List jpeg, {required int rotate, required bool ex
       // The shorter side is scaled down to 1080 px if larger; never up.
       minWidth: 1080,
       minHeight: 1080,
-      quality: 90,
+      quality: photoQuality,
       rotate: rotate,
       autoCorrectionAngle: exif,
       keepExif: false,

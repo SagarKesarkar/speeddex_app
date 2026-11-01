@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,6 +17,9 @@ abstract interface class PhotoPreparer {
   /// Returns the path of the prepared photo and deletes the original. Throws
   /// if the privacy check can't run; the photo must then not be sent.
   Future<String> prepare(String rawPath, HeldAs held);
+
+  /// The small copy of a prepared photo for Garage grids, or null.
+  Future<Uint8List?> thumbnail(Uint8List prepared);
 }
 
 class DevicePhotoPreparer implements PhotoPreparer {
@@ -49,6 +53,9 @@ class DevicePhotoPreparer implements PhotoPreparer {
     return out.path;
   }
 
+  @override
+  Future<Uint8List?> thumbnail(Uint8List prepared) => thumbnailJpeg(prepared);
+
   Future<void> close() async => _privacy?.close();
 }
 
@@ -59,6 +66,9 @@ class PassThroughPhotoPreparer implements PhotoPreparer {
 
   @override
   Future<String> prepare(String rawPath, HeldAs held) async => rawPath;
+
+  @override
+  Future<Uint8List?> thumbnail(Uint8List prepared) async => null;
 }
 
 final photoPreparerProvider = Provider<PhotoPreparer>((ref) {

@@ -1,0 +1,159 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:speeddex/app/providers.dart';
+import 'package:speeddex/core/push/push_service.dart';
+import 'package:speeddex/data/api/json_mappers.dart';
+import 'package:speeddex/domain/goals.dart';
+import 'package:speeddex/domain/profile.dart';
+import 'package:speeddex/features/profile/presentation/badge_case.dart';
+import 'package:speeddex/features/profile/presentation/daily_goals_panel.dart';
+
+void main() {
+  setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
+
+  Future<void> pump(WidgetTester tester, Widget child, {List<Object> overrides = const []}) =>
+      tester.pumpWidget(
+        ProviderScope(
+          overrides: overrides.cast(),
+          child: MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(child: SizedBox(width: 360, child: child)),
+            ),
+          ),
+        ),
+      );
+
+  group('badge case', () {
+    final badges = [
+      SpotterBadge(
+        id: 'first_catch',
+        name: 'First Catch',
+        description: 'Catch your first car.',
+        icon: 'camera',
+        earnedAt: DateTime(2026, 10, 21),
+      ),
+      const SpotterBadge(
+        id: 'collector_10',
+        name: 'Collector',
+        description: 'Have 10 cars in your Garage.',
+        icon: 'collection',
+        earned: false,
+        progress: 6,
+        target: 10,
+      ),
+    ];
+
+    testWidgets('shows earned and locked badges, and explains one when tapped', (tester) async {
+      await pump(tester, BadgeCase(badges: badges));
+      expect(tester.takeException(), isNull);
+      expect(find.text('FIRST CATCH'), findsOneWidget);
+      expect(find.text('6 / 10'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp('Collector badge, locked, 6 of 10')), findsOneWidget);
+
+      await tester.tap(find.text('COLLECTOR'));
+      await tester.pumpAndSettle();
+      expect(find.text('Have 10 cars in your Garage.'), findsOneWidget);
+      expect(find.text('6 of 10'), findsOneWidget);
+    });
+
+    testWidgets('earned and locked badges both open a full-width sheet', (tester) async {
+      await pump(tester, BadgeCase(badges: badges));
+      final screen = tester.view.physicalSize.width / tester.view.devicePixelRatio;
+      for (final name in ['FIRST CATCH', 'COLLECTOR']) {
+        await tester.tap(find.text(name));
+        await tester.pumpAndSettle();
+        expect(tester.getSize(find.byType(BottomSheet)).width, screen, reason: name);
+        Navigator.of(tester.element(find.byType(BottomSheet))).pop();
+        await tester.pumpAndSettle();
+      }
+    });
+
+    testWidgets('says how to earn the first one when there are none', (tester) async {
+      await pump(tester, const BadgeCase(badges: []));
+      expect(find.textContaining('first catch earns one'), findsOneWidget);
+    });
+  });
+
+  testWidgets('daily goals show progress, XP and what is done', (tester) async {
+    final goals = DailyGoals(
+      goals: const [
+        DailyGoal(
+          id: 'catch',
+          title: 'Catch a car',
+          description: '',
+          progress: 1,
+          target: 1,
+          xp: 25,
+          completed: true,
+        ),
+        DailyGoal(
+          id: 'like',
+          title: 'Like 3 catches',
+          description: '',
+          progress: 2,
+          target: 3,
+          xp: 10,
+          completed: false,
+        ),
+      ],
+      bonusTitle: 'Complete every goal',
+      bonusXp: 25,
+      bonusCompleted: false,
+      xpEarnedToday: 25,
+      resetsAt: DateTime.now().add(const Duration(hours: 3, minutes: 5)),
+    );
+    await pump(
+      tester,
+      const DailyGoalsPanel(),
+      overrides: [dailyGoalsProvider.overrideWith((_) async => goals)],
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('1 of 2 done'), findsOneWidget);
+    expect(find.text('2 / 3'), findsOneWidget);
+    expect(find.text('25 of 60 XP earned today.'), findsOneWidget);
+    expect(find.textContaining('New goals in 3h'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('Catch a car, 25 XP, done')), findsOneWidget);
+  });
+
+  test('maps badges and goals from the API', () {
+    const m = ApiMappers(_identity);
+    final g = m.dailyGoals({
+      'date': '2026-11-02',
+      'resetsAt': '2026-11-03T00:00:00.000Z',
+      'goals': [
+        {
+          'goalId': 'like',
+          'title': 'Like 3 catches',
+          'description': 'd',
+          'progress': 2,
+          'target': 3,
+          'xp': 10,
+          'completed': false,
+        },
+      ],
+      'bonus': {'goalId': 'all', 'title': 'Complete every goal', 'xp': 25, 'completed': false},
+      'xpEarnedToday': 0,
+    });
+    expect(g.goals.single.fraction, closeTo(2 / 3, 0.001));
+    expect(g.xpAvailable, 35);
+  });
+
+  test('a push can only open screens the app has', () {
+    expect(PushService.safeRoute('/card/12'), '/card/12');
+    expect(PushService.safeRoute('/user/7'), '/user/7');
+    expect(PushService.safeRoute('/profile'), '/profile');
+    expect(PushService.safeRoute('/settings/delete-account'), isNull);
+    expect(PushService.safeRoute('https://evil.example'), isNull);
+    expect(PushService.safeRoute('/card/12/../../x'), isNull);
+    expect(PushService.safeRoute(null), isNull);
+  });
+
+  test('push is off without Firebase settings', () {
+    expect(PushConfig.fromEnvironment.enabled, isFalse);
+  });
+}
+
+String _identity(String s) => s;

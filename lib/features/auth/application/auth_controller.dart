@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers.dart';
+import '../../../app/push.dart';
 import '../../feed/application/feed_controller.dart';
 
 enum AuthStatus { unknown, signedOut, signedIn }
@@ -30,8 +33,10 @@ class AuthController extends Notifier<AuthStatus> {
       ..invalidate(profileProvider)
       ..invalidate(walletProvider)
       ..invalidate(garageSummaryProvider)
+      ..invalidate(dailyGoalsProvider)
       ..invalidate(feedControllerProvider);
     state = AuthStatus.signedIn;
+    unawaited(ref.read(pushServiceProvider).start());
   }
 
   Future<void> _restore() async {
@@ -65,11 +70,15 @@ class AuthController extends Notifier<AuthStatus> {
   /// [signOut], nothing changes locally if the server refuses.
   Future<void> deleteAccount(String password) async {
     await ref.read(authRepositoryProvider).deleteAccount(password);
+    // The server has already forgotten this phone; this stops the spotlight.
+    await ref.read(pushServiceProvider).stop();
     await ref.read(tokenStoreProvider).clear();
     state = AuthStatus.signedOut;
   }
 
   Future<void> signOut() async {
+    // While the session is still valid, so the server forgets this phone.
+    await ref.read(pushServiceProvider).stop();
     try {
       await ref.read(authRepositoryProvider).signOut();
     } finally {

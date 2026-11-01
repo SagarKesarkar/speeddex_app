@@ -26,6 +26,17 @@ Without `API_BASE_URL`, every tab header shows a **DEV DATA** tag and nothing le
 
 For a release APK pointed at a server: `flutter build apk --release --dart-define=API_BASE_URL=https://your.api.host`.
 
+### Push notifications (Firebase)
+
+Push is on when all four values from the Android app in the Firebase console (Project settings → General → Your apps) are passed. They identify the app; they aren't secrets. No `google-services.json` is needed.
+
+```
+--dart-define=FIREBASE_API_KEY=… --dart-define=FIREBASE_APP_ID=1:…:android:… \
+--dart-define=FIREBASE_SENDER_ID=… --dart-define=FIREBASE_PROJECT_ID=…
+```
+
+After sign-in the app asks for notification permission (Android 13+), registers its token with the API and subscribes to the `spotlight` topic; sign-out undoes both. Tapping a notification opens its card, player, Profile (daily goals) or Scan. With the app open, it shows as a snack bar instead. Without the values, or with built-in demo data, push is off.
+
 ### Ads (Google AdMob)
 
 | `--dart-define=ADS_MODE=` | Ads shown |
@@ -141,10 +152,11 @@ The dev backend imitates some of these rules for UI purposes only.
 
 ## Not yet implemented
 - Google sign-in in the app (needs the native Google Sign-In SDK; the API side is ready).
-- A notifications inbox screen. The API records likes, comments, follows and moderation results.
+- A notifications inbox screen. The API records likes, comments, follows, moderation results and daily goals (and pushes them).
+- Notification settings in the app. Players can turn notifications off in Android settings.
 - GPS tagging on capture and the Nearby ranking: the API supports both, but the app doesn't request location permission yet.
 - Store purchases and the Garage-slot offers. These show as disabled "not available yet" buttons.
-- Share links and account deletion.
+- Share links.
 - Legal documents: the sheet says they can't be shown yet.
 - Persisting "onboarding seen" across launches.
 - Bundling fonts as assets: `google_fonts` currently fetches them at runtime.

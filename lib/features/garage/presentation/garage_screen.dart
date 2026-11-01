@@ -423,7 +423,7 @@ class _ListTile extends StatelessWidget {
               border: Border.all(color: t.color, width: 1.5),
             ),
             clipBehavior: Clip.antiAlias,
-            child: CarVisual(card: card),
+            child: CarVisual(card: card, small: true),
           ),
           const SizedBox(width: SdSpace.md),
           Expanded(

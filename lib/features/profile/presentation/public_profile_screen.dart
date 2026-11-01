@@ -14,6 +14,7 @@ import '../../../core/widgets/sd_states.dart';
 import '../../../domain/car_card.dart';
 import '../../../domain/profile.dart';
 import '../../cards/presentation/card_grid_tile.dart';
+import 'badge_case.dart';
 
 final publicProfileProvider = FutureProvider.autoDispose.family<PublicProfile, String>(
   (ref, userId) => ref.watch(usersRepositoryProvider).publicProfile(userId),
@@ -240,19 +241,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
         const SizedBox(height: SdSpace.xxl),
         const SdSectionLabel('Badges'),
         const SizedBox(height: SdSpace.md),
-        Wrap(
-          spacing: SdSpace.sm,
-          runSpacing: SdSpace.sm,
-          children: [
-            for (final b in p.badges)
-              Chip(
-                avatar: const Icon(Icons.military_tech_rounded, size: 16, color: SdColors.gold),
-                label: Text(b.name.toUpperCase(), style: SdType.label.copyWith(fontSize: 10)),
-                backgroundColor: SdColors.surface,
-                side: const BorderSide(color: SdColors.line),
-              ),
-          ],
-        ),
+        BadgeStrip(badges: p.badges),
       ],
       const SizedBox(height: SdSpace.xxl),
       const SdSectionLabel('Cars'),

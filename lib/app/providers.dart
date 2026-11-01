@@ -7,6 +7,7 @@ import '../data/api/http_repositories.dart';
 import '../data/api/json_mappers.dart';
 import '../data/repositories.dart';
 import '../dev/dev_backend.dart';
+import '../domain/goals.dart';
 import '../domain/profile.dart';
 import '../core/ads/ads.dart';
 
@@ -85,6 +86,11 @@ final walletProvider = FutureProvider<Wallet>(
 );
 final profileProvider = FutureProvider<UserProfile>(
   (ref) => ref.watch(profileRepositoryProvider).me(),
+);
+
+/// Today's goals. Invalidated after a catch, like or comment.
+final dailyGoalsProvider = FutureProvider<DailyGoals>(
+  (ref) => ref.watch(profileRepositoryProvider).dailyGoals(),
 );
 final garageSummaryProvider = FutureProvider<GarageSummary>(
   (ref) => ref.watch(garageRepositoryProvider).summary(),

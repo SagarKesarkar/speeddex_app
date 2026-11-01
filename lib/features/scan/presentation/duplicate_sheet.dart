@@ -126,7 +126,7 @@ class _CopyRow extends StatelessWidget {
           onTap: onReplace,
           child: Row(
             children: [
-              SizedBox(width: 92, height: 72, child: CarVisual(card: card)),
+              SizedBox(width: 92, height: 72, child: CarVisual(card: card, small: true)),
               const SizedBox(width: SdSpace.md),
               Expanded(
                 child: Column(

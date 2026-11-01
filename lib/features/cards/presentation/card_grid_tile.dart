@@ -57,7 +57,7 @@ class CardGridTile extends StatelessWidget {
                     children: [
                       Hero(
                         tag: 'card-${card.id}',
-                        child: CarVisual(card: card),
+                        child: CarVisual(card: card, small: true),
                       ),
                       Positioned(top: 6, right: 6, child: TierChip(t, dense: true)),
                       if (locked)

@@ -9,6 +9,8 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image/image.dart' as img;
 
+import 'photo_orientation.dart';
+
 /// A region of a photo to hide, in image pixels.
 typedef Box = ({int x, int y, int w, int h});
 
@@ -262,7 +264,7 @@ Future<Uint8List> encodeJpeg(ui.Image image) async {
       png!.buffer.asUint8List(),
       minWidth: image.width,
       minHeight: image.height,
-      quality: 90,
+      quality: photoQuality,
       autoCorrectionAngle: false,
     );
   } catch (_) {

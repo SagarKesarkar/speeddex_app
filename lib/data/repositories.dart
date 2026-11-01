@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../domain/car_card.dart';
+import '../domain/goals.dart';
 import '../domain/profile.dart';
 import '../domain/rarity_tier.dart';
 import '../domain/social.dart';
@@ -241,7 +242,13 @@ class AddResult {
 
 abstract interface class CaptureRepository {
   /// POST /v1/captures/upload-session → PUT signed URL → POST identify.
-  Future<IdentifyOutcome> identify(Uint8List jpegBytes, {required String localPath});
+  /// [thumbnail], the small copy for Garage grids, is uploaded too when
+  /// given; a failed thumbnail upload doesn't stop the scan.
+  Future<IdentifyOutcome> identify(
+    Uint8List jpegBytes, {
+    required String localPath,
+    Uint8List? thumbnail,
+  });
 
   /// POST /v1/captures/{id}/add-to-garage (or replace-card when [replace]).
   ///
@@ -285,6 +292,15 @@ abstract interface class ProfileRepository {
   /// POST /v1/auth/email/verify/resend — emails a new confirmation link.
   /// Returns true if the address turned out to be confirmed already.
   Future<bool> resendVerification();
+
+  /// GET /v1/goals/today
+  Future<DailyGoals> dailyGoals();
+
+  /// POST /v1/notifications/device-token — this install receives pushes.
+  Future<void> registerPushToken(String token, {required String platform});
+
+  /// DELETE /v1/notifications/device-token — on sign-out.
+  Future<void> unregisterPushToken(String token);
 }
 
 abstract interface class GeoRepository {

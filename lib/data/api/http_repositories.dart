@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import '../../core/errors/app_failure.dart';
 import '../../core/security/token_store.dart';
 import '../../domain/car_card.dart';
+import '../../domain/goals.dart';
 import '../../domain/profile.dart';
 import '../../domain/social.dart';
 import '../repositories.dart';
@@ -294,7 +295,11 @@ class HttpCaptureRepository implements CaptureRepository {
   final _uploaded = <String, String>{};
 
   @override
-  Future<IdentifyOutcome> identify(Uint8List jpegBytes, {required String localPath}) async {
+  Future<IdentifyOutcome> identify(
+    Uint8List jpegBytes, {
+    required String localPath,
+    Uint8List? thumbnail,
+  }) async {
     var captureId = _uploaded[localPath];
     if (captureId == null) {
       final session = _j(
@@ -306,6 +311,15 @@ class HttpCaptureRepository implements CaptureRepository {
       );
       captureId = '${session['captureId']}';
       final upload = _j(session['upload']);
+      // Before the photo: the server accepts it while the scan is in progress.
+      if (thumbnail != null && session['thumbnailUpload'] is Map) {
+        final t = _j(session['thumbnailUpload']);
+        try {
+          await _api.putBytes(_api.rebase(t['url'] as String), thumbnail);
+        } on AppFailure {
+          // Optional: grids fall back to the full photo.
+        }
+      }
       await _api.putBytes(_api.rebase(upload['url'] as String), jpegBytes);
       _uploaded[localPath] = captureId;
     }
@@ -429,6 +443,19 @@ class HttpProfileRepository implements ProfileRepository {
   @override
   Future<bool> resendVerification() async =>
       _j(await _api.post('/auth/email/verify/resend'))['alreadyVerified'] == true;
+
+  @override
+  Future<DailyGoals> dailyGoals() async => _m.dailyGoals(_j(await _api.get('/goals/today')));
+
+  @override
+  Future<void> registerPushToken(String token, {required String platform}) async {
+    await _api.post('/notifications/device-token', {'token': token, 'platform': platform});
+  }
+
+  @override
+  Future<void> unregisterPushToken(String token) async {
+    await _api.delete('/notifications/device-token', {'token': token});
+  }
 
   @override
   Future<Wallet> wallet() async {

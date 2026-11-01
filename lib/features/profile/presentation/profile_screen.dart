@@ -17,6 +17,8 @@ import '../../../domain/profile.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../auth/presentation/legal_sheet.dart';
 import '../../shell/app_shell.dart';
+import 'badge_case.dart';
+import 'daily_goals_panel.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -38,7 +40,8 @@ class ProfileScreen extends ConsumerWidget {
           onRefresh: () async {
             ref
               ..invalidate(walletProvider)
-              ..invalidate(garageSummaryProvider);
+              ..invalidate(garageSummaryProvider)
+              ..invalidate(dailyGoalsProvider);
             ref.invalidate(profileProvider);
             await ref.read(profileProvider.future);
           },
@@ -85,16 +88,25 @@ class ProfileScreen extends ConsumerWidget {
                       Text(p.bio!, style: SdType.body.copyWith(color: SdColors.textMuted)),
                     ],
                     const SizedBox(height: SdSpace.xxl),
+                    const SdSectionLabel('Daily goals'),
+                    const SizedBox(height: SdSpace.md),
+                    const DailyGoalsPanel(),
+                    const SizedBox(height: SdSpace.xxl),
                     const SdSectionLabel('Wallet'),
                     const SizedBox(height: SdSpace.md),
                     _WalletPanel(wallet: wallet),
                     const SizedBox(height: SdSpace.xxl),
                     SdSectionLabel(
                       'Badges',
-                      trailing: Text('${p.badges.length}', style: SdType.dataSmall),
+                      trailing: Text(
+                        p.allBadges.isEmpty
+                            ? '${p.badges.length}'
+                            : '${p.badges.length} / ${p.allBadges.length}',
+                        style: SdType.dataSmall,
+                      ),
                     ),
                     const SizedBox(height: SdSpace.md),
-                    _Badges(badges: p.badges),
+                    BadgeCase(badges: p.badgeCase),
                     const SizedBox(height: SdSpace.xxl),
                     const SdSectionLabel('Account'),
                     const SizedBox(height: SdSpace.md),
@@ -413,68 +425,6 @@ class _WalletPanel extends StatelessWidget {
             onPressed: null,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Badges extends StatelessWidget {
-  const _Badges({required this.badges});
-  final List<SpotterBadge> badges;
-
-  @override
-  Widget build(BuildContext context) {
-    if (badges.isEmpty) {
-      return Text('No badges yet. Your first catch earns one.', style: SdType.caption);
-    }
-    return SizedBox(
-      height: 104,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: badges.length,
-        separatorBuilder: (_, _) => const SizedBox(width: SdSpace.md),
-        itemBuilder: (_, i) {
-          final b = badges[i];
-          return Semantics(
-            label: b.earnedAt == null
-                ? '${b.name} badge'
-                : '${b.name} badge, earned ${SdFormat.date(b.earnedAt!)}',
-            excludeSemantics: true,
-            child: Container(
-              width: 104,
-              padding: const EdgeInsets.all(SdSpace.sm),
-              decoration: BoxDecoration(
-                color: SdColors.surface,
-                borderRadius: const BorderRadius.all(SdRadius.md),
-                border: Border.all(color: SdColors.line),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: SdColors.gold, width: 1.5),
-                      gradient: RadialGradient(
-                        colors: [SdColors.gold.withValues(alpha: 0.3), Colors.transparent],
-                      ),
-                    ),
-                    child: const Icon(Icons.military_tech_rounded, color: SdColors.gold, size: 22),
-                  ),
-                  const SizedBox(height: SdSpace.sm),
-                  Text(
-                    b.name.toUpperCase(),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    style: SdType.label.copyWith(fontSize: 9.5, color: SdColors.text),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
       ),
     );
   }

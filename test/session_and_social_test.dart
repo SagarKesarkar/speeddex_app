@@ -17,6 +17,9 @@ class _Profiles implements ProfileRepository {
   bool signedIn = false;
 
   @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+
+  @override
   Future<UserProfile> me() async {
     if (!signedIn) throw const SessionExpiredFailure();
     return UserProfile(

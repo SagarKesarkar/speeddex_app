@@ -125,7 +125,13 @@ class ScanController extends Notifier<ScanState> {
     state = ScanIdentifying(path);
     try {
       final bytes = await File(path).readAsBytes();
-      final outcome = await ref.read(captureRepositoryProvider).identify(bytes, localPath: path);
+      final outcome = await ref
+          .read(captureRepositoryProvider)
+          .identify(
+            bytes,
+            localPath: path,
+            thumbnail: await ref.read(photoPreparerProvider).thumbnail(bytes),
+          );
       state = switch (outcome) {
         Identified() => ScanResult(path, outcome),
         ReviewRequired() => ScanNeedsReview(path),
@@ -156,7 +162,8 @@ class ScanController extends Notifier<ScanState> {
       ref
         ..invalidate(walletProvider)
         ..invalidate(garageSummaryProvider)
-        ..invalidate(profileProvider);
+        ..invalidate(profileProvider)
+        ..invalidate(dailyGoalsProvider);
       // The new catch is posted to the feed; reload it without losing the view mode.
       unawaited(ref.read(feedControllerProvider.notifier).refresh());
       state = ScanAdded(result);
