@@ -116,6 +116,9 @@ class HttpFeedRepository implements FeedRepository {
   }
 
   @override
+  Future<FeedPost> post(String postId) async => _m.post(_j(await _api.get('/posts/$postId')));
+
+  @override
   Future<void> setLiked(String postId, {required bool liked}) async {
     liked ? await _api.put('/posts/$postId/like') : await _api.delete('/posts/$postId/like');
   }

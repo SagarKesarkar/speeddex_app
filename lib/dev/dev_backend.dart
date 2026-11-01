@@ -25,6 +25,20 @@ class DevStore {
       _garage.add(_register(_instance(vid, 'mine-$vid', owned: true, at: at)));
     }
     _seedFeed();
+    // The player's own catches are in the feed too, with a few reactions.
+    for (final (i, card) in _garage.indexed) {
+      _feed.add(
+        FeedPost(
+          id: 'mine-p$i',
+          author: viewer,
+          card: card,
+          likeCount: (i * 5) % 13,
+          commentCount: i % 4,
+          viewerHasLiked: false,
+          createdAt: card.capturedAt,
+        ),
+      );
+    }
   }
 
   static const unlockCost = 5;
@@ -80,6 +94,18 @@ class DevStore {
     displayName: profile.displayName,
     level: profile.level,
   );
+
+  /// [card] with its feed post's counts, as the API lists Garage cards.
+  CarCard _withPost(CarCard card) {
+    for (final p in _feed) {
+      if (p.card.id == card.id) {
+        return card.copyWith(
+          post: PostStats(postId: p.id, likeCount: p.likeCount, commentCount: p.commentCount),
+        );
+      }
+    }
+    return card;
+  }
 
   Future<void> latency([int ms = 550]) =>
       Future.delayed(Duration(milliseconds: ms + _rng.nextInt(250)));
@@ -234,6 +260,16 @@ class DevFeedRepository implements FeedRepository {
         .map((p) => p.copyWith(card: _store._forViewer(p.card)))
         .toList();
     return FeedPage(posts: posts, nextCursor: end < _store._feed.length ? '$end' : null);
+  }
+
+  @override
+  Future<FeedPost> post(String postId) async {
+    await _store.latency();
+    final p = _store._feed.firstWhere(
+      (p) => p.id == postId,
+      orElse: () => throw const NotFoundFailure('This post is no longer available.'),
+    );
+    return p.copyWith(card: _store._forViewer(p.card));
   }
 
   @override
@@ -398,6 +434,7 @@ class DevGarageRepository implements GarageRepository {
         .where((c) => query.tier == null || c.tier == query.tier)
         .where((c) => query.make == null || c.make == query.make)
         .map(_store._forViewer)
+        .map(_store._withPost)
         .toList();
     int perf(CarCard c) => c.specs.horsepower ?? c.specs.displacementCc ?? 0;
     list.sort(switch (query.sort) {

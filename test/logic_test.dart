@@ -21,6 +21,8 @@ class _FailingLikes implements FeedRepository {
   Future<FeedPage> fetch({String? cursor, int limit = 20}) =>
       _inner.fetch(cursor: cursor, limit: limit);
   @override
+  Future<FeedPost> post(String postId) => _inner.post(postId);
+  @override
   Future<void> setLiked(String postId, {required bool liked}) async => throw const NetworkFailure();
   @override
   Future<List<FeedComment>> comments(String postId) => _inner.comments(postId);

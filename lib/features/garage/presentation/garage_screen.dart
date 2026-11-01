@@ -124,7 +124,7 @@ class GarageScreen extends ConsumerWidget {
                               maxCrossAxisExtent: 220,
                               mainAxisSpacing: SdSpace.md,
                               crossAxisSpacing: SdSpace.md,
-                              childAspectRatio: 0.74,
+                              childAspectRatio: cardGridAspect,
                             ),
                             itemCount: list.length,
                             itemBuilder: (_, i) => CardGridTile(card: list[i]),

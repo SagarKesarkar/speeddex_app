@@ -2,11 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import 'package:speeddex/app/providers.dart';
 import 'package:speeddex/core/push/push_service.dart';
 import 'package:speeddex/data/api/json_mappers.dart';
+import 'package:speeddex/dev/dev_fixtures.dart';
+import 'package:speeddex/domain/car_card.dart';
+import 'package:speeddex/features/cards/presentation/card_grid_tile.dart';
+import 'package:speeddex/data/repositories.dart';
 import 'package:speeddex/domain/goals.dart';
 import 'package:speeddex/domain/profile.dart';
+import 'package:speeddex/domain/social.dart';
+import 'package:speeddex/features/feed/presentation/feed_sheets.dart';
 import 'package:speeddex/features/profile/presentation/badge_case.dart';
 import 'package:speeddex/features/profile/presentation/daily_goals_panel.dart';
 
@@ -118,6 +125,70 @@ void main() {
     expect(find.bySemanticsLabel(RegExp('Catch a car, 25 XP, done')), findsOneWidget);
   });
 
+  testWidgets('a grid card reveals its likes and comments, and they open the post', (tester) async {
+    final opened = <String>[];
+    final card = DevFixtures.byId('101')
+        .copyWith(post: const PostStats(postId: '31', likeCount: 4, commentCount: 2));
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 160,
+                height: 160 / cardGridAspect,
+                child: CardGridTile(card: card),
+              ),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/post/:id',
+          builder: (_, s) {
+            opened.add(s.pathParameters['id']!);
+            return const SizedBox();
+          },
+        ),
+      ],
+    );
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    expect(tester.takeException(), isNull);
+    // Folded away at first: a tab reveals the counts.
+    expect(find.text('4'), findsNothing);
+    await tester.tap(find.bySemanticsLabel('Show likes and comments'));
+    await tester.pumpAndSettle();
+    expect(find.text('4'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel(RegExp('4 likes, 2 comments')));
+    await tester.pumpAndSettle();
+    expect(opened, ['31']);
+  });
+
+  testWidgets('a new comment shows once, even if the reloaded list has it', (tester) async {
+    final repo = _SharedListComments();
+    const author = UserSummary(id: '1', handle: 'apex', displayName: 'Apex', level: 1);
+    final post = FeedPost(
+      id: '9',
+      author: author,
+      card: DevFixtures.byId('101'),
+      likeCount: 0,
+      commentCount: 0,
+      viewerHasLiked: false,
+      createdAt: DateTime(2026),
+    );
+    await pump(
+      tester,
+      SizedBox(height: 500, child: CommentsThread(post: post)),
+      overrides: [feedRepositoryProvider.overrideWithValue(repo)],
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Clean spot');
+    await tester.tap(find.byTooltip('Send comment'));
+    await tester.pumpAndSettle();
+    expect(find.text('Clean spot'), findsOneWidget);
+  });
+
   test('maps badges and goals from the API', () {
     const m = ApiMappers(_identity);
     final g = m.dailyGoals({
@@ -144,6 +215,7 @@ void main() {
   test('a push can only open screens the app has', () {
     expect(PushService.safeRoute('/card/12'), '/card/12');
     expect(PushService.safeRoute('/user/7'), '/user/7');
+    expect(PushService.safeRoute('/post/31'), '/post/31');
     expect(PushService.safeRoute('/profile'), '/profile');
     expect(PushService.safeRoute('/settings/delete-account'), isNull);
     expect(PushService.safeRoute('https://evil.example'), isNull);
@@ -157,3 +229,31 @@ void main() {
 }
 
 String _identity(String s) => s;
+
+/// Like the demo backend: posting a comment appends to the very list that
+/// [comments] returned.
+class _SharedListComments implements FeedRepository {
+  final _list = <FeedComment>[];
+
+  @override
+  Future<FeedPage> fetch({String? cursor, int limit = 20}) async =>
+      const FeedPage(posts: [], nextCursor: null);
+
+  @override
+  Future<List<FeedComment>> comments(String postId) async => _list;
+
+  @override
+  Future<FeedComment> addComment(String postId, String text) async {
+    final c = FeedComment(
+      id: 'c${_list.length}',
+      author: const UserSummary(id: '1', handle: 'apex', displayName: 'Apex', level: 1),
+      text: text,
+      createdAt: DateTime(2026),
+    );
+    _list.add(c);
+    return c;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}

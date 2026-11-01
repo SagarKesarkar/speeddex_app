@@ -96,6 +96,14 @@ class CaptureFacts {
 }
 
 /// Attributed source text for a model (Wikipedia summaries are CC BY-SA 4.0).
+/// The feed post a card was shared in, with its reactions (grids show them).
+class PostStats {
+  const PostStats({required this.postId, required this.likeCount, required this.commentCount});
+  final String postId;
+  final int likeCount;
+  final int commentCount;
+}
+
 class CarAbout {
   const CarAbout({required this.summary, this.sourceUrl, this.license});
 
@@ -131,6 +139,7 @@ class CarCard {
     this.imageUrl,
     this.thumbUrl,
     this.about,
+    this.post,
   });
 
   /// This card instance. Two players catching the same car get different ids.
@@ -177,6 +186,9 @@ class CarCard {
   /// Small copy of the photo for grids and lists. Null on older cards.
   final String? thumbUrl;
 
+  /// Its feed post, in grid listings only; null if it has none (or wasn't sent).
+  final PostStats? post;
+
   /// Model summary with attribution; present on detail responses only.
   final CarAbout? about;
 
@@ -190,6 +202,7 @@ class CarCard {
     bool? hiddenUnlocked,
     String? imagePath,
     DateTime? capturedAt,
+    PostStats? post,
 
     /// Drops the spec sheet, as the API does for viewers without an entitlement.
     bool clearHidden = false,
@@ -218,5 +231,6 @@ class CarCard {
     imageUrl: imageUrl,
     thumbUrl: thumbUrl,
     about: about,
+    post: post ?? this.post,
   );
 }

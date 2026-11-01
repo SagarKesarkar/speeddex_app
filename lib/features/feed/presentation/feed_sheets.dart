@@ -21,19 +21,39 @@ Future<void> showCommentsSheet(BuildContext context, FeedPost post) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => _CommentsSheet(post: post),
+    builder: (context) => Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * 0.62,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: SdSpace.gutter),
+              child: SdSectionLabel('Comments · ${post.card.displayName}'),
+            ),
+            Expanded(child: CommentsThread(post: post)),
+          ],
+        ),
+      ),
+    ),
   );
 }
 
-class _CommentsSheet extends ConsumerStatefulWidget {
-  const _CommentsSheet({required this.post});
+/// A post's comments with a box to add one. [header] scrolls with the list
+/// (the post screen puts the post above its comments).
+class CommentsThread extends ConsumerStatefulWidget {
+  const CommentsThread({super.key, required this.post, this.header, this.onAdded});
   final FeedPost post;
+  final Widget? header;
+
+  /// After a comment is posted.
+  final VoidCallback? onAdded;
 
   @override
-  ConsumerState<_CommentsSheet> createState() => _CommentsSheetState();
+  ConsumerState<CommentsThread> createState() => _CommentsThreadState();
 }
 
-class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
+class _CommentsThreadState extends ConsumerState<CommentsThread> {
   static const maxLength = 500;
   final _input = TextEditingController();
   final List<FeedComment> _added = [];
@@ -56,6 +76,7 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
       ref.read(feedControllerProvider.notifier).bumpComments(widget.post.id);
       _input.clear();
       setState(() => _added.add(c));
+      widget.onAdded?.call();
     } catch (e) {
       if (mounted) showSdSnack(context, e.userMessage);
     } finally {
@@ -66,87 +87,111 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
   @override
   Widget build(BuildContext context) {
     final comments = ref.watch(_commentsProvider(widget.post.id));
-    final inset = MediaQuery.viewInsetsOf(context).bottom;
-    return Padding(
-      padding: EdgeInsets.only(bottom: inset),
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * 0.62,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: SdSpace.gutter),
-              child: SdSectionLabel('Comments · ${widget.post.card.displayName}'),
-            ),
-            Expanded(
-              child: comments.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => SdErrorState(
-                  error: e,
-                  onRetry: () => ref.invalidate(_commentsProvider(widget.post.id)),
-                ),
-                data: (list) {
-                  final all = [...list, ..._added];
-                  if (all.isEmpty) {
-                    return const SdEmptyState(
-                      icon: Icons.mode_comment_outlined,
-                      title: 'No comments yet',
-                      message: 'Be the first to say something about this catch.',
-                    );
-                  }
-                  return ListView.separated(
-                    padding: const EdgeInsets.all(SdSpace.gutter),
-                    itemCount: all.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: SdSpace.lg),
-                    itemBuilder: (_, i) => _CommentRow(comment: all[i]),
-                  );
-                },
+    final header = widget.header;
+    Widget withHeader(Widget body) => header == null
+        ? body
+        : ListView(
+            padding: const EdgeInsets.all(SdSpace.gutter),
+            children: [
+              header,
+              const SizedBox(height: SdSpace.xxl),
+              body,
+            ],
+          );
+    return Column(
+      children: [
+        Expanded(
+          child: comments.when(
+            loading: () => withHeader(
+              const Padding(
+                padding: EdgeInsets.all(SdSpace.xxl),
+                child: Center(child: CircularProgressIndicator()),
               ),
             ),
-            const Divider(),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  SdSpace.gutter,
-                  SdSpace.sm,
-                  SdSpace.sm,
-                  SdSpace.sm,
-                ),
-                child: Row(
+            error: (e, _) => withHeader(
+              SdErrorState(
+                error: e,
+                onRetry: () => ref.invalidate(_commentsProvider(widget.post.id)),
+              ),
+            ),
+            data: (list) {
+              // Comments posted here, unless the loaded list already has them.
+              final shown = {for (final c in list) c.id};
+              final all = [...list, ..._added.where((c) => !shown.contains(c.id))];
+              if (all.isEmpty) {
+                return withHeader(
+                  const SdEmptyState(
+                    icon: Icons.mode_comment_outlined,
+                    title: 'No comments yet',
+                    message: 'Be the first to say something about this catch.',
+                  ),
+                );
+              }
+              if (header != null) {
+                return ListView(
+                  padding: const EdgeInsets.all(SdSpace.gutter),
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _input,
-                        maxLength: maxLength,
-                        minLines: 1,
-                        maxLines: 3,
-                        textInputAction: TextInputAction.send,
-                        onSubmitted: (_) => _send(),
-                        decoration: const InputDecoration(
-                          hintText: 'Add a comment',
-                          counterText: '',
-                          isDense: true,
-                        ),
-                      ),
+                    header,
+                    const SizedBox(height: SdSpace.xxl),
+                    SdSectionLabel(
+                      'Comments',
+                      trailing: Text('${all.length}', style: SdType.dataSmall),
                     ),
-                    const SizedBox(width: SdSpace.xs),
-                    IconButton(
-                      tooltip: 'Send comment',
-                      onPressed: _sending ? null : _send,
-                      icon: _sending
-                          ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.send_rounded, color: SdColors.gold),
-                    ),
+                    const SizedBox(height: SdSpace.lg),
+                    for (final c in all) ...[
+                      _CommentRow(comment: c),
+                      const SizedBox(height: SdSpace.lg),
+                    ],
                   ],
-                ),
-              ),
-            ),
-          ],
+                );
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.all(SdSpace.gutter),
+                itemCount: all.length,
+                separatorBuilder: (_, _) => const SizedBox(height: SdSpace.lg),
+                itemBuilder: (_, i) => _CommentRow(comment: all[i]),
+              );
+            },
+          ),
         ),
-      ),
+        const Divider(),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(SdSpace.gutter, SdSpace.sm, SdSpace.sm, SdSpace.sm),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _input,
+                    maxLength: maxLength,
+                    minLines: 1,
+                    maxLines: 3,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _send(),
+                    decoration: const InputDecoration(
+                      hintText: 'Add a comment',
+                      counterText: '',
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: SdSpace.xs),
+                IconButton(
+                  tooltip: 'Send comment',
+                  onPressed: _sending ? null : _send,
+                  icon: _sending
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.send_rounded, color: SdColors.gold),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

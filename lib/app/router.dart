@@ -6,6 +6,7 @@ import '../features/auth/application/auth_controller.dart';
 import '../features/auth/presentation/auth_screens.dart';
 import '../features/cards/presentation/card_detail_screen.dart';
 import '../features/feed/presentation/feed_screen.dart';
+import '../features/feed/presentation/post_screen.dart';
 import '../features/garage/presentation/garage_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../data/repositories.dart';
@@ -86,6 +87,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           parentNavigatorKey: _rootKey,
           builder: (_, state) => FollowListScreen(userId: state.pathParameters['id']!, list: list),
         ),
+      GoRoute(
+        path: '/post/:id',
+        parentNavigatorKey: _rootKey,
+        builder: (_, state) => PostScreen(postId: state.pathParameters['id']!),
+      ),
       GoRoute(
         path: '/card/:id',
         parentNavigatorKey: _rootKey,

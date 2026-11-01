@@ -80,6 +80,9 @@ abstract interface class FeedRepository {
   /// GET /v1/feed?limit=20&cursor=...
   Future<FeedPage> fetch({String? cursor, int limit = 20});
 
+  /// GET /v1/posts/{postId}
+  Future<FeedPost> post(String postId);
+
   /// PUT/DELETE /v1/posts/{postId}/like
   Future<void> setLiked(String postId, {required bool liked});
 

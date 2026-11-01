@@ -9,8 +9,12 @@ import '../../../core/widgets/car_visual.dart';
 import '../../../core/widgets/sd_primitives.dart';
 import '../../../domain/car_card.dart';
 
+/// Width-to-height of a grid cell: the card plus its likes/comments strip.
+const cardGridAspect = 0.64;
+
 /// Compact Car Card for grids (Garage, a spotter's profile). Opens the full
 /// card; other spotters' cards show a lock until their spec sheet is unlocked.
+/// Below it, the card's likes and comments open its post.
 class CardGridTile extends StatelessWidget {
   const CardGridTile({super.key, required this.card, this.onTap});
   final CarCard card;
@@ -22,7 +26,7 @@ class CardGridTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = card.tier;
     final locked = !card.ownedByViewer && !card.hiddenUnlocked;
-    return Semantics(
+    final face = Semantics(
       button: true,
       label:
           '${card.displayName}, ${t.label}, caught ${SdFormat.date(card.capturedAt)}'
@@ -124,5 +128,123 @@ class CardGridTile extends StatelessWidget {
         ),
       ),
     );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: face),
+        _Reactions(post: card.post, color: t.color),
+      ],
+    );
   }
 }
+
+/// Under the card: a slim tab that reveals the card's likes and comments;
+/// those open its post. Always the same height, so grid rows line up.
+class _Reactions extends StatefulWidget {
+  const _Reactions({required this.post, required this.color});
+  final PostStats? post;
+  final Color color;
+
+  @override
+  State<_Reactions> createState() => _ReactionsState();
+}
+
+class _ReactionsState extends State<_Reactions> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = widget.post;
+    return SizedBox(
+      height: _stripHeight,
+      child: p == null
+          ? null
+          : AnimatedSwitcher(
+              duration: SdMotion.fast,
+              // Both states hang from the bottom of the card, full width.
+              layoutBuilder: (current, previous) => Stack(
+                alignment: Alignment.topCenter,
+                fit: StackFit.expand,
+                children: [...previous, ?current],
+              ),
+              transitionBuilder: (child, a) => SizeTransition(
+                sizeFactor: a,
+                alignment: Alignment.topCenter,
+                child: FadeTransition(opacity: a, child: child),
+              ),
+              child: _open ? _counts(context, p) : _tab(),
+            ),
+    );
+  }
+
+  Widget _tab() => Semantics(
+    key: const ValueKey('tab'),
+    button: true,
+    label: 'Show likes and comments',
+    excludeSemantics: true,
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() => _open = true),
+      // The whole slot under the card is the hit area, not just the slim tab.
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Container(
+          height: 18,
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: SdSpace.md),
+          decoration: const BoxDecoration(
+            color: SdColors.surfaceHigh,
+            borderRadius: BorderRadius.vertical(bottom: SdRadius.lg),
+          ),
+          child: const Icon(
+            Icons.keyboard_double_arrow_down_rounded,
+            size: 16,
+            color: SdColors.gold,
+          ),
+        ),
+      ),
+    ),
+  );
+
+  Widget _counts(BuildContext context, PostStats p) => Semantics(
+    key: const ValueKey('counts'),
+    button: true,
+    label: '${p.likeCount} likes, ${p.commentCount} comments. Open post',
+    excludeSemantics: true,
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => context.push('/post/${p.postId}'),
+      child: Container(
+        height: _stripHeight,
+        margin: const EdgeInsets.symmetric(horizontal: SdSpace.sm),
+        decoration: BoxDecoration(
+          color: SdColors.surfaceRaised,
+          borderRadius: const BorderRadius.vertical(bottom: SdRadius.md),
+          border: Border(
+            left: BorderSide(color: widget.color.withValues(alpha: 0.5)),
+            right: BorderSide(color: widget.color.withValues(alpha: 0.5)),
+            bottom: BorderSide(color: widget.color.withValues(alpha: 0.5)),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.local_fire_department_rounded,
+              size: 17,
+              color: p.likeCount > 0 ? SdColors.signal : SdColors.textFaint,
+            ),
+            const SizedBox(width: SdSpace.xs),
+            Text(SdFormat.compact(p.likeCount), style: SdType.dataSmall),
+            const SizedBox(width: SdSpace.xl),
+            const Icon(Icons.mode_comment_outlined, size: 16, color: SdColors.textMuted),
+            const SizedBox(width: SdSpace.xs),
+            Text(SdFormat.compact(p.commentCount), style: SdType.dataSmall),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+const _stripHeight = 34.0;

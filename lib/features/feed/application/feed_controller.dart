@@ -118,12 +118,19 @@ class FeedController extends Notifier<FeedState> {
     }
   }
 
+  /// The post may not be loaded in the feed (opened from a notification).
   void bumpComments(String postId) {
     ref
       ..invalidate(dailyGoalsProvider)
       ..invalidate(profileProvider);
-    final p = state.posts.firstWhere((p) => p.id == postId);
-    _replace(p.copyWith(commentCount: p.commentCount + 1));
+    for (final p in state.posts) {
+      if (p.id == postId) _replace(p.copyWith(commentCount: p.commentCount + 1));
+    }
+  }
+
+  /// A post changed elsewhere (the post screen): keeps the feed in step, if loaded.
+  void applyPost(FeedPost post) {
+    if (state.posts.any((p) => p.id == post.id)) _replace(post);
   }
 
   /// Applies an unlocked card to every post showing it.

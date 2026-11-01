@@ -73,7 +73,7 @@ class PushService {
   bool _initialised = false;
 
   /// Only screens the app has; anything else in a push is ignored.
-  static final _routes = RegExp(r'^/(card/\d+|user/\d+|profile|garage|scan|feed)$');
+  static final _routes = RegExp(r'^/(card/\d+|post/\d+|user/\d+|profile|garage|scan|feed)$');
 
   static String? safeRoute(Object? raw) => raw is String && _routes.hasMatch(raw) ? raw : null;
 

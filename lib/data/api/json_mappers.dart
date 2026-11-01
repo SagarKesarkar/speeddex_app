@@ -103,6 +103,14 @@ class ApiMappers {
       imagePath: localImagePath,
       imageUrl: j['imageUrl'] == null ? null : rebaseUrl(j['imageUrl'] as String),
       thumbUrl: j['thumbUrl'] == null ? null : rebaseUrl(j['thumbUrl'] as String),
+      post: switch (j['post']) {
+        final Map<String, Object?> p => PostStats(
+          postId: '${p['postId']}',
+          likeCount: _int(p['likeCount']),
+          commentCount: _int(p['commentCount']),
+        ),
+        _ => null,
+      },
     );
   }
 

@@ -28,8 +28,8 @@ void _handle(Ref ref, PushEvent e) {
   final route = e.route;
   if (e.opened) {
     if (route == null) return;
-    // Cards and players open on top; tabs are switched to.
-    route.startsWith('/card/') || route.startsWith('/user/')
+    // Cards, posts and players open on top; tabs are switched to.
+    route.startsWith('/card/') || route.startsWith('/post/') || route.startsWith('/user/')
         ? router.push(route)
         : router.go(route);
     return;
