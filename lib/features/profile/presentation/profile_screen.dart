@@ -382,12 +382,13 @@ class _Stat extends StatelessWidget {
   }
 }
 
-class _WalletPanel extends StatelessWidget {
+class _WalletPanel extends ConsumerWidget {
   const _WalletPanel({required this.wallet});
   final Wallet? wallet;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pro = ref.watch(isProProvider);
     return SdPanel(
       accent: SdColors.gold,
       child: Column(
@@ -416,13 +417,11 @@ class _WalletPanel extends StatelessWidget {
             style: SdType.caption,
           ),
           const SizedBox(height: SdSpace.lg),
-          // Prices come from GET /v1/store/offers and purchases need store
-          // billing plus server receipt verification; neither is integrated.
-          const SdButton(
-            label: 'Store · not available yet',
-            icon: Icons.storefront_outlined,
-            variant: SdButtonVariant.secondary,
-            onPressed: null,
+          SdButton(
+            label: pro ? 'SpeedDex Pro · active' : 'Get SpeedDex Pro',
+            icon: Icons.workspace_premium_rounded,
+            variant: pro ? SdButtonVariant.secondary : SdButtonVariant.gold,
+            onPressed: () => context.push('/pro'),
           ),
         ],
       ),

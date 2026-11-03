@@ -160,6 +160,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('4'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
+    // The arrow at the end folds it away again.
+    await tester.tap(find.bySemanticsLabel('Hide likes and comments'));
+    await tester.pumpAndSettle();
+    expect(find.text('4'), findsNothing);
+    await tester.tap(find.bySemanticsLabel('Show likes and comments'));
+    await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel(RegExp('4 likes, 2 comments')));
     await tester.pumpAndSettle();
     expect(opened, ['31']);
@@ -221,6 +227,13 @@ void main() {
     expect(PushService.safeRoute('https://evil.example'), isNull);
     expect(PushService.safeRoute('/card/12/../../x'), isNull);
     expect(PushService.safeRoute(null), isNull);
+  });
+
+  test('a completed goal is a reward; other notifications are not', () {
+    expect(const PushEvent(kind: 'goal', opened: false).isReward, isTrue);
+    expect(const PushEvent(kind: 'like', route: '/post/3', opened: false).isReward, isFalse);
+    // Sent by a server from before `kind`: the goal's destination tells.
+    expect(const PushEvent(route: '/profile', opened: false).isReward, isTrue);
   });
 
   test('push is off without Firebase settings', () {

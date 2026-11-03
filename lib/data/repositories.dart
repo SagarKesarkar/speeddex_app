@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import '../domain/car_card.dart';
 import '../domain/goals.dart';
+import '../domain/premium.dart';
 import '../domain/profile.dart';
 import '../domain/rarity_tier.dart';
 import '../domain/social.dart';
@@ -24,8 +25,9 @@ abstract interface class AuthRepository {
   /// POST /v1/auth/login
   Future<AuthSession> signInWithEmail(String email, String password);
 
-  /// POST /v1/auth/google
-  Future<AuthSession> signInWithGoogle();
+  /// POST /v1/auth/google with the ID token from Google's account picker.
+  /// Creates the account on first use, or links it to one with that email.
+  Future<AuthSession> signInWithGoogle(String idToken);
 
   /// POST /v1/auth/register
   Future<AuthSession> register({
@@ -304,6 +306,17 @@ abstract interface class ProfileRepository {
 
   /// DELETE /v1/notifications/device-token — on sign-out.
   Future<void> unregisterPushToken(String token);
+
+  /// GET /v1/store/subscription — product IDs, account token, current status.
+  Future<SubscriptionInfo> subscriptionInfo();
+
+  /// POST /v1/store/subscription/verify — the server confirms a purchase
+  /// with the store and returns the resulting status.
+  Future<Premium> verifySubscription({
+    required String platform,
+    required String productId,
+    required String purchaseRef,
+  });
 }
 
 abstract interface class GeoRepository {

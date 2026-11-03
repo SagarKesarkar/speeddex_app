@@ -2,4 +2,6 @@
 <resources>
     <!-- Push notification accent: the app's gold (SdColors.gold). -->
     <color name="notification_accent">#D9B970</color>
+    <!-- The app's background (SdColors.ink): icon, start-up screen. -->
+    <color name="ic_launcher_background">#0B0C0F</color>
 </resources>

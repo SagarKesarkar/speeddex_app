@@ -6,6 +6,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
 import '../../../app/providers.dart';
@@ -249,6 +250,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
             title: 'Scan',
             subtitle: summary == null
                 ? null
+                : summary.premium
+                ? 'Unlimited scans · Pro'
                 : '${summary.scansLeftToday} of ${summary.dailyScanLimit} scans left today',
             trailing: _StatusTag(status, statusColor),
           ),
@@ -299,6 +302,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
                               child: DailyLimitOffer(
                                 limit: summary?.dailyScanLimit,
                                 adScansLeft: summary?.rewardedScansLeft,
+                                onPremium: () => context.push('/pro'),
                                 // Granted: identify this same photo straight away.
                                 onWatchAd: () async {
                                   if (await earnExtraScan(context, ref)) {

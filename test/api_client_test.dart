@@ -256,6 +256,27 @@ void main() {
     });
   });
 
+  test('Google sign-in sends the ID token and keeps the session it gets back', () async {
+    Map<String, dynamic>? sent;
+    final repo = HttpAuthRepository(
+      client((req) async {
+        expect(req.url.path, '/v1/auth/google');
+        expect(req.headers['authorization'], isNull);
+        sent = jsonDecode(req.body) as Map<String, dynamic>;
+        return _json(200, {
+          'accessToken': 'g-access',
+          'refreshToken': 'g-refresh',
+          'user': {'userId': 42},
+        });
+      }),
+      tokens,
+    );
+    final session = await repo.signInWithGoogle('google-id-token-xyz');
+    expect(sent, {'idToken': 'google-id-token-xyz'});
+    expect(session.userId, '42');
+    expect(await tokens.readAccess(), 'g-access');
+  });
+
   group('HttpAuthRepository password reset', () {
     test('sends the code, then the new password with the token it was exchanged for', () async {
       final bodies = <String, Map<String, dynamic>>{};

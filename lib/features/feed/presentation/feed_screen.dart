@@ -91,7 +91,7 @@ class _FeedList extends ConsumerWidget {
     final ctrl = ref.read(feedControllerProvider.notifier);
     final posts = state.posts;
     // One banner in every block of 20 posts, after a random one of them.
-    final adsAfter = ref.read(adsServiceProvider).config.enabled
+    final adsAfter = (ref.read(adsServiceProvider).config.enabled && !ref.watch(isProProvider))
         ? feedAdSlots(posts.length, seed: _adSeed, ended: !state.hasMore).toSet()
         : const <int>{};
     final items = <int?>[
@@ -223,7 +223,7 @@ class _FeedReelState extends ConsumerState<_FeedReel> {
   Widget build(BuildContext context) {
     final posts = widget.posts;
     // Same placement as the list: one ad page in every block of 20 cards.
-    final adsAfter = ref.read(adsServiceProvider).config.enabled
+    final adsAfter = (ref.read(adsServiceProvider).config.enabled && !ref.watch(isProProvider))
         ? feedAdSlots(posts.length, seed: _adSeed, ended: widget.ended).toSet()
         : const <int>{};
     final items = <int?>[
@@ -257,16 +257,27 @@ class _FeedReelState extends ConsumerState<_FeedReel> {
               const SizedBox(height: SdSpace.sm),
               Expanded(
                 child: Center(
+                  // Every card gets the same frame, and the frame is what's
+                  // scaled to the page: so all cards show at the same width,
+                  // however many rows each has. A card taller than the frame
+                  // (rare) is scaled down inside it.
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: SizedBox(
-                      width: 360,
-                      child: GestureDetector(
-                        onTap: () => context.push('/card/${p.card.id}'),
-                        child: CollectorCard(
-                          card: p.card,
-                          unlocking: _unlocking.contains(p.card.id),
-                          onUnlock: () => _unlock(p),
+                      width: _reelCardWidth,
+                      height: _reelCardHeight,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: SizedBox(
+                          width: _reelCardWidth,
+                          child: GestureDetector(
+                            onTap: () => context.push('/card/${p.card.id}'),
+                            child: CollectorCard(
+                              card: p.card,
+                              unlocking: _unlocking.contains(p.card.id),
+                              onUnlock: () => _unlock(p),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -331,3 +342,8 @@ void openAuthor(BuildContext context, FeedPost post) {
     context.push('/user/${post.author.id}');
   }
 }
+
+/// The frame every card is laid out in, in card view. Cards measure about
+/// 655 points at this width, 687 with the unlock button.
+const _reelCardWidth = 360.0;
+const _reelCardHeight = 690.0;

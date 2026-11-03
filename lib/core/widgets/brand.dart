@@ -1,54 +1,31 @@
 import 'package:flutter/material.dart';
 
-import '../theme/sd_colors.dart';
-import '../theme/sd_typography.dart';
+/// The SpeedDex logo: gauge, car and wordmark, drawn for dark backgrounds.
+/// Sized by height (headers) or width (splash). The image is
+/// `assets/brand/logo.png`, made by tool/brand_assets.dart.
+class SdLogo extends StatelessWidget {
+  const SdLogo({super.key, this.height, this.width});
+  final double? height;
+  final double? width;
 
-/// SpeedDex wordmark: "SPEED" in ivory, "DEX" in gold, speed-line underscore.
-class SdWordmark extends StatelessWidget {
-  const SdWordmark({super.key, this.size = 22});
-  final double size;
+  /// Width / height of the logo image.
+  static const aspect = 1000 / 404;
 
   @override
   Widget build(BuildContext context) {
-    final style = SdType.title.copyWith(fontSize: size, letterSpacing: size * 0.04);
     return Semantics(
       label: 'SpeedDex',
+      image: true,
       excludeSemantics: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(text: 'SPEED', style: style),
-                TextSpan(
-                  text: 'DEX',
-                  style: style.copyWith(color: SdColors.gold),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: size * 0.12),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(width: size * 2.4, height: 2, color: SdColors.signal),
-              SizedBox(width: size * 0.15),
-              Container(
-                width: size * 0.7,
-                height: 2,
-                color: SdColors.signal.withValues(alpha: 0.6),
-              ),
-              SizedBox(width: size * 0.15),
-              Container(
-                width: size * 0.3,
-                height: 2,
-                color: SdColors.signal.withValues(alpha: 0.3),
-              ),
-            ],
-          ),
-        ],
+      child: Image.asset(
+        'assets/brand/logo.png',
+        height: height,
+        width: width,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.medium,
+        // Decoded at the size it's shown, not the full 1000 px.
+        cacheWidth: ((width ?? (height ?? 40) * aspect) * MediaQuery.devicePixelRatioOf(context))
+            .round(),
       ),
     );
   }

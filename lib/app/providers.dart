@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/auth/google_auth.dart';
 import '../core/config/app_config.dart';
 import '../core/security/token_store.dart';
 import '../data/api/api_client.dart';
@@ -80,12 +81,20 @@ final usersRepositoryProvider = Provider<UsersRepository>(
   (ref) => _pick(ref, http: HttpUsersRepository.new, dev: DevUsersRepository.new),
 );
 
+/// Google's account picker, for "Continue with Google".
+final googleAuthProvider = Provider<GoogleAuth>((_) => GoogleAuth());
+
 /// Shared, read-mostly account state. Mutations elsewhere invalidate these.
 final walletProvider = FutureProvider<Wallet>(
   (ref) => ref.watch(profileRepositoryProvider).wallet(),
 );
 final profileProvider = FutureProvider<UserProfile>(
   (ref) => ref.watch(profileRepositoryProvider).me(),
+);
+
+/// SpeedDex Pro is active: no ads, unlimited Garage and scans.
+final isProProvider = Provider<bool>(
+  (ref) => ref.watch(profileProvider).value?.premium.active ?? false,
 );
 
 /// Today's goals. Invalidated after a catch, like or comment.

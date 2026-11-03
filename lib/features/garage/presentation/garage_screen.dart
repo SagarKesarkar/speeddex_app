@@ -158,7 +158,13 @@ class _SummaryPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: _Metric('Cars', '${s.totalCards}', sub: 'of ${s.capacity} slots')),
+              Expanded(
+                child: _Metric(
+                  'Cars',
+                  '${s.totalCards}',
+                  sub: s.premium ? 'unlimited · Pro' : 'of ${s.capacity} slots',
+                ),
+              ),
               Container(width: 1, height: 40, color: SdColors.line),
               Expanded(child: _Metric('Total XP', SdFormat.number(s.totalXp), gold: true)),
               Container(width: 1, height: 40, color: SdColors.line),

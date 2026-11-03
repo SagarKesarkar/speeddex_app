@@ -37,5 +37,7 @@ void _handle(Ref ref, PushEvent e) {
   // Android doesn't show a notification while the app is open: say it here.
   final context = router.routerDelegate.navigatorKey.currentContext;
   final text = [e.title, e.body].whereType<String>().join(' · ');
-  if (context != null && context.mounted && text.isNotEmpty) showSdSnack(context, text);
+  if (context != null && context.mounted && text.isNotEmpty) {
+    showSdSnack(context, text, success: e.isReward);
+  }
 }

@@ -54,9 +54,18 @@ class AuthController extends Notifier<AuthStatus> {
     _signedIn();
   }
 
-  Future<void> signInWithGoogle() async {
-    await ref.read(authRepositoryProvider).signInWithGoogle();
+  /// Returns false if the player closed Google's account picker.
+  Future<bool> signInWithGoogle() async {
+    if (ref.read(appConfigProvider).usesDevData) {
+      // No Google project behind the built-in demo data: the repository explains.
+      await ref.read(authRepositoryProvider).signInWithGoogle('');
+      return false;
+    }
+    final token = await ref.read(googleAuthProvider).idToken();
+    if (token == null) return false;
+    await ref.read(authRepositoryProvider).signInWithGoogle(token);
     _signedIn();
+    return true;
   }
 
   Future<void> register(String name, String email, String password) async {
@@ -79,6 +88,7 @@ class AuthController extends Notifier<AuthStatus> {
   Future<void> signOut() async {
     // While the session is still valid, so the server forgets this phone.
     await ref.read(pushServiceProvider).stop();
+    await ref.read(googleAuthProvider).signOut();
     try {
       await ref.read(authRepositoryProvider).signOut();
     } finally {

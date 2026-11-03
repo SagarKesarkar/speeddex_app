@@ -12,7 +12,8 @@ class SplashScreen extends StatelessWidget {
       body: Stack(
         children: [
           Positioned.fill(child: Pinstripe()),
-          Center(child: SdWordmark(size: 34)),
+          // Same size and place as Android's start-up screen, so the hand-over is seamless.
+          Center(child: SdLogo(width: 280)),
         ],
       ),
     );

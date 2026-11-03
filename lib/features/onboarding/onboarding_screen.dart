@@ -63,7 +63,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: SdSpace.gutter),
                         child: Row(
                           children: [
-                            const SdWordmark(size: 18),
+                            const SdLogo(height: 48),
                             const Spacer(),
                             if (!last)
                               TextButton(

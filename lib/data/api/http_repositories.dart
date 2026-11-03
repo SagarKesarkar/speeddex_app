@@ -6,6 +6,7 @@ import '../../core/errors/app_failure.dart';
 import '../../core/security/token_store.dart';
 import '../../domain/car_card.dart';
 import '../../domain/goals.dart';
+import '../../domain/premium.dart';
 import '../../domain/profile.dart';
 import '../../domain/social.dart';
 import '../repositories.dart';
@@ -46,11 +47,8 @@ class HttpAuthRepository implements AuthRepository {
       _start(await _api.postPublic('/auth/login', {'email': email, 'password': password}));
 
   @override
-  Future<AuthSession> signInWithGoogle() async {
-    // The Google ID token comes from the native Google Sign-In SDK, which is
-    // not integrated yet. The API also refuses until GOOGLE_CLIENT_IDS is set.
-    throw const ServiceUnavailableFailure('Google sign-in is not available yet.');
-  }
+  Future<AuthSession> signInWithGoogle(String idToken) async =>
+      _start(await _api.postPublic('/auth/google', {'idToken': idToken}));
 
   @override
   Future<AuthSession> register({
@@ -459,6 +457,25 @@ class HttpProfileRepository implements ProfileRepository {
   Future<void> unregisterPushToken(String token) async {
     await _api.delete('/notifications/device-token', {'token': token});
   }
+
+  @override
+  Future<SubscriptionInfo> subscriptionInfo() async =>
+      _m.subscriptionInfo(_j(await _api.get('/store/subscription')));
+
+  @override
+  Future<Premium> verifySubscription({
+    required String platform,
+    required String productId,
+    required String purchaseRef,
+  }) async => _m.premium(
+    _j(
+      await _api.post('/store/subscription/verify', {
+        'platform': platform,
+        'productId': productId,
+        'purchaseRef': purchaseRef,
+      }),
+    )['premium'],
+  );
 
   @override
   Future<Wallet> wallet() async {

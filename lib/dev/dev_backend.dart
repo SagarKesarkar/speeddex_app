@@ -6,6 +6,7 @@ import '../core/security/token_store.dart';
 import '../data/repositories.dart';
 import '../domain/car_card.dart';
 import '../domain/goals.dart';
+import '../domain/premium.dart';
 import '../domain/profile.dart';
 import '../domain/rarity_tier.dart';
 import '../domain/social.dart';
@@ -196,7 +197,7 @@ class DevAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthSession> signInWithGoogle() async {
+  Future<AuthSession> signInWithGoogle(String idToken) async {
     await _store.latency(500);
     throw const ServiceUnavailableFailure(
       'Google sign-in is not connected in this development build.',
@@ -642,6 +643,26 @@ class DevProfileRepository implements ProfileRepository {
 
   @override
   Future<void> unregisterPushToken(String token) async {}
+
+  @override
+  Future<SubscriptionInfo> subscriptionInfo() async {
+    await _store.latency(250);
+    // No store behind the built-in demo data.
+    return const SubscriptionInfo(
+      productIds: ['speeddex_pro_monthly'],
+      onGooglePlay: false,
+      onAppStore: false,
+      accountToken: '',
+      premium: Premium.none,
+    );
+  }
+
+  @override
+  Future<Premium> verifySubscription({
+    required String platform,
+    required String productId,
+    required String purchaseRef,
+  }) async => throw const ServiceUnavailableFailure('Subscriptions need the real server.');
 }
 
 /// A small built-in location list for development mode; the real API serves

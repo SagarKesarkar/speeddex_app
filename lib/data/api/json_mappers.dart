@@ -1,5 +1,6 @@
 import '../../domain/car_card.dart';
 import '../../domain/goals.dart';
+import '../../domain/premium.dart';
 import '../../domain/profile.dart';
 import '../../domain/rarity_tier.dart';
 import '../../domain/social.dart';
@@ -174,6 +175,29 @@ class ApiMappers {
       ),
       badges: _badges(j['badges']),
       allBadges: _badges(j['allBadges']),
+      premium: premium(j['premium']),
+    );
+  }
+
+  Premium premium(Object? raw) => switch (raw) {
+    final Map<String, Object?> p => Premium(
+      active: p['active'] == true,
+      status: p['status'] as String?,
+      platform: p['platform'] as String?,
+      expiresAt: p['expiresAt'] == null ? null : DateTime.tryParse(p['expiresAt'] as String),
+      autoRenewing: p['autoRenewing'] == true,
+    ),
+    _ => Premium.none,
+  };
+
+  SubscriptionInfo subscriptionInfo(Json j) {
+    final available = (j['available'] as Map?) ?? const {};
+    return SubscriptionInfo(
+      productIds: [for (final p in (j['productIds'] as List?) ?? const []) '$p'],
+      onGooglePlay: available['google_play'] == true,
+      onAppStore: available['app_store'] == true,
+      accountToken: j['accountToken'] as String? ?? '',
+      premium: premium(j['premium']),
     );
   }
 
@@ -246,5 +270,6 @@ class ApiMappers {
     scansToday: _int(j['scansToday']),
     dailyScanLimit: _int(j['dailyScanLimit'], 5),
     rewardedScansLeft: (j['rewardedScansLeft'] as num?)?.toInt(),
+    premium: j['premium'] == true,
   );
 }

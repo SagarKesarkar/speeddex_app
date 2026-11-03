@@ -43,12 +43,19 @@ const spotlightTopic = 'spotlight';
 
 /// A tapped or received push: where it leads, and what it said.
 class PushEvent {
-  const PushEvent({this.route, this.title, this.body, required this.opened});
+  const PushEvent({this.route, this.title, this.body, this.kind, required this.opened});
 
   /// In-app location, e.g. `/card/12`; validated by [PushService.safeRoute].
   final String? route;
   final String? title;
   final String? body;
+
+  /// What it's about: like, comment, follow, moderation, goal, scans, spotlight.
+  final String? kind;
+
+  /// A reward (a completed daily goal): shown with a tick, not an info icon.
+  /// The route is checked too, for notifications sent before `kind` existed.
+  bool get isReward => kind == 'goal' || (kind == null && route == '/profile');
 
   /// True when the player tapped it; false when it arrived with the app open.
   final bool opened;
@@ -81,6 +88,7 @@ class PushService {
     route: safeRoute(m.data['route']),
     title: m.notification?.title,
     body: m.notification?.body,
+    kind: m.data['kind'] as String?,
     opened: opened,
   );
 

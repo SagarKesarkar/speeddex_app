@@ -206,43 +206,69 @@ class _ReactionsState extends State<_Reactions> {
     ),
   );
 
-  Widget _counts(BuildContext context, PostStats p) => Semantics(
+  /// The counts open the post; the arrow at the end folds the strip away.
+  Widget _counts(BuildContext context, PostStats p) => Container(
     key: const ValueKey('counts'),
-    button: true,
-    label: '${p.likeCount} likes, ${p.commentCount} comments. Open post',
-    excludeSemantics: true,
-    child: GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => context.push('/post/${p.postId}'),
-      child: Container(
-        height: _stripHeight,
-        margin: const EdgeInsets.symmetric(horizontal: SdSpace.sm),
-        decoration: BoxDecoration(
-          color: SdColors.surfaceRaised,
-          borderRadius: const BorderRadius.vertical(bottom: SdRadius.md),
-          border: Border(
-            left: BorderSide(color: widget.color.withValues(alpha: 0.5)),
-            right: BorderSide(color: widget.color.withValues(alpha: 0.5)),
-            bottom: BorderSide(color: widget.color.withValues(alpha: 0.5)),
+    height: _stripHeight,
+    margin: const EdgeInsets.symmetric(horizontal: SdSpace.sm),
+    decoration: BoxDecoration(
+      color: SdColors.surfaceRaised,
+      borderRadius: const BorderRadius.vertical(bottom: SdRadius.md),
+      border: Border(
+        left: BorderSide(color: widget.color.withValues(alpha: 0.5)),
+        right: BorderSide(color: widget.color.withValues(alpha: 0.5)),
+        bottom: BorderSide(color: widget.color.withValues(alpha: 0.5)),
+      ),
+    ),
+    child: Stack(
+      children: [
+        // Counts stay centred on the strip; the arrow sits on top at the end.
+        Positioned.fill(
+          child: Semantics(
+            button: true,
+            label: '${p.likeCount} likes, ${p.commentCount} comments. Open post',
+            excludeSemantics: true,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => context.push('/post/${p.postId}'),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.local_fire_department_rounded,
+                    size: 17,
+                    color: p.likeCount > 0 ? SdColors.signal : SdColors.textFaint,
+                  ),
+                  const SizedBox(width: SdSpace.xs),
+                  Text(SdFormat.compact(p.likeCount), style: SdType.dataSmall),
+                  const SizedBox(width: SdSpace.xl),
+                  const Icon(Icons.mode_comment_outlined, size: 16, color: SdColors.textMuted),
+                  const SizedBox(width: SdSpace.xs),
+                  Text(SdFormat.compact(p.commentCount), style: SdType.dataSmall),
+                ],
+              ),
+            ),
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.local_fire_department_rounded,
-              size: 17,
-              color: p.likeCount > 0 ? SdColors.signal : SdColors.textFaint,
+        Positioned(
+          right: 0,
+          top: 0,
+          bottom: 0,
+          child: Semantics(
+            button: true,
+            label: 'Hide likes and comments',
+            excludeSemantics: true,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => setState(() => _open = false),
+              child: const SizedBox(
+                width: 32,
+                child: Icon(Icons.keyboard_double_arrow_up_rounded, size: 16, color: SdColors.gold),
+              ),
             ),
-            const SizedBox(width: SdSpace.xs),
-            Text(SdFormat.compact(p.likeCount), style: SdType.dataSmall),
-            const SizedBox(width: SdSpace.xl),
-            const Icon(Icons.mode_comment_outlined, size: 16, color: SdColors.textMuted),
-            const SizedBox(width: SdSpace.xs),
-            Text(SdFormat.compact(p.commentCount), style: SdType.dataSmall),
-          ],
+          ),
         ),
-      ),
+      ],
     ),
   );
 }

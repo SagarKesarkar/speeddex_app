@@ -29,7 +29,7 @@ class _AuthScaffold extends StatelessWidget {
         leading: BackButton(
           onPressed: () => context.canPop() ? context.pop() : context.go('/onboarding'),
         ),
-        title: const SdWordmark(size: 16),
+        title: const SdLogo(height: 44),
       ),
       body: SafeArea(
         top: false,
@@ -102,6 +102,25 @@ class _PasswordFieldState extends State<_PasswordField> {
           onPressed: () => setState(() => _obscure = !_obscure),
         ),
       ),
+    );
+  }
+}
+
+/// "——— OR ———" between the email form and Google.
+class _OrDivider extends StatelessWidget {
+  const _OrDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: SdColors.line)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: SdSpace.md),
+          child: Text('OR', style: SdType.label.copyWith(color: SdColors.textFaint)),
+        ),
+        const Expanded(child: Divider(color: SdColors.line)),
+      ],
     );
   }
 }
@@ -222,7 +241,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
         const SizedBox(height: SdSpace.md),
         SdButton(label: 'Sign in', loading: _busy, onPressed: _submit),
-        const SizedBox(height: SdSpace.md),
+        const SizedBox(height: SdSpace.lg),
+        const _OrDivider(),
+        const SizedBox(height: SdSpace.lg),
         SdButton(
           label: 'Continue with Google',
           icon: Icons.g_mobiledata_rounded,
@@ -268,6 +289,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _busy = false;
   AutovalidateMode _autovalidate = AutovalidateMode.disabled;
   bool _showTermsError = false;
+  bool _googleBusy = false;
   String? _error;
 
   @override
@@ -276,6 +298,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       c.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _google() async {
+    // Signing up with Google creates the account too: the same terms apply.
+    setState(() => _showTermsError = !_accepted);
+    if (_googleBusy || !_accepted) return;
+    setState(() {
+      _googleBusy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithGoogle();
+    } catch (e) {
+      if (mounted) setState(() => _error = e.userMessage);
+    } finally {
+      if (mounted) setState(() => _googleBusy = false);
+    }
   }
 
   Future<void> _submit() async {
@@ -373,6 +412,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ),
         const SizedBox(height: SdSpace.xl),
         SdButton(label: 'Create account', loading: _busy, onPressed: _submit),
+        const SizedBox(height: SdSpace.lg),
+        const _OrDivider(),
+        const SizedBox(height: SdSpace.lg),
+        SdButton(
+          label: 'Continue with Google',
+          icon: Icons.g_mobiledata_rounded,
+          variant: SdButtonVariant.secondary,
+          loading: _googleBusy,
+          onPressed: _google,
+        ),
         const SizedBox(height: SdSpace.lg),
         Center(
           child: TextButton(

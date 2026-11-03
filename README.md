@@ -37,6 +37,18 @@ Push is on when all four values from the Android app in the Firebase console (Pr
 
 After sign-in the app asks for notification permission (Android 13+), registers its token with the API and subscribes to the `spotlight` topic; sign-out undoes both. Tapping a notification opens its card, player, Profile (daily goals) or Scan. With the app open, it shows as a snack bar instead. Without the values, or with built-in demo data, push is off.
 
+### Logo and app icons
+
+Every logo and icon file comes from `reference/logo.png` (the full lockup, drawn for dark backgrounds). After changing it, run `dart run tool/brand_assets.dart` in `Mobile/`. It writes the in-app logo (`assets/brand/logo.png`), the Android launcher icons (legacy, adaptive and themed), the Android start-up screen logo, the iOS app icons, the Play Store icon (`StoreAssets/play-icon-512.png`) and the website's and admin panel's logo and favicons. Then rebuild the website (`node build.mjs`) and the admin panel (`npm run build`).
+
+### Google sign-in
+
+"Continue with Google" (sign-in and create-account screens) needs the server's OAuth client ID: `--dart-define=GOOGLE_SERVER_CLIENT_ID=<Web client ID>.apps.googleusercontent.com` (add it to `dart_defines.json`). The same ID goes in the API's `GOOGLE_CLIENT_IDS`. The Android app must be registered in the Firebase/Google Cloud project with the signing key's SHA-1. Closing the account picker does nothing; without the ID the button says Google sign-in isn't available.
+
+### SpeedDex Pro (subscription)
+
+`/pro` (Profile → Get SpeedDex Pro, and Go Premium on the daily-limit card). Prices come from the store (`in_app_purchase`); the purchase is sent to the API, which confirms it with Google Play or the App Store, and only then is it finished with the store. A purchase interrupted by a network failure is left unfinished so the store delivers it again. Pro hides the feed's ads and shows the Garage and scans as unlimited. Needs the subscription `speeddex_pro_monthly` in Play Console / App Store Connect.
+
 ### Ads (Google AdMob)
 
 | `--dart-define=ADS_MODE=` | Ads shown |
@@ -151,11 +163,10 @@ Store-receipt and rewarded-ad verification aren't built, so those endpoints refu
 The dev backend imitates some of these rules for UI purposes only.
 
 ## Not yet implemented
-- Google sign-in in the app (needs the native Google Sign-In SDK; the API side is ready).
 - A notifications inbox screen. The API records likes, comments, follows, moderation results and daily goals (and pushes them).
 - Notification settings in the app. Players can turn notifications off in Android settings.
 - GPS tagging on capture and the Nearby ranking: the API supports both, but the app doesn't request location permission yet.
-- Store purchases and the Garage-slot offers. These show as disabled "not available yet" buttons.
+- Coin packs and Garage-slot offers (the SpeedDex Pro subscription is built).
 - Share links.
 - Legal documents: the sheet says they can't be shown yet.
 - Persisting "onboarding seen" across launches.

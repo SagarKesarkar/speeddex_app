@@ -1,3 +1,4 @@
+import 'premium.dart';
 import 'rarity_tier.dart';
 import 'social.dart';
 
@@ -100,6 +101,7 @@ class UserProfile {
     this.region = const UserRegion(),
     this.badges = const [],
     this.allBadges = const [],
+    this.premium = Premium.none,
   });
 
   final String id;
@@ -133,6 +135,9 @@ class UserProfile {
 
   List<SpotterBadge> get badgeCase => allBadges.isEmpty ? badges : allBadges;
 
+  /// SpeedDex Pro, if subscribed.
+  final Premium premium;
+
   double get levelProgress {
     final span = xpNextLevel - xpLevelStart;
     if (span <= 0) return 1;
@@ -158,6 +163,7 @@ class UserProfile {
         region: region ?? this.region,
         badges: badges,
         allBadges: allBadges,
+        premium: premium,
       );
 }
 
@@ -217,6 +223,7 @@ class GarageSummary {
     required this.scansToday,
     required this.dailyScanLimit,
     this.rewardedScansLeft,
+    this.premium = false,
   });
 
   final int totalCards;
@@ -230,6 +237,9 @@ class GarageSummary {
   /// server doesn't say (older versions).
   final int? rewardedScansLeft;
 
-  bool get isFull => totalCards >= capacity;
+  /// SpeedDex Pro: the Garage and daily scans are unlimited (fair use).
+  final bool premium;
+
+  bool get isFull => !premium && totalCards >= capacity;
   int get scansLeftToday => (dailyScanLimit - scansToday).clamp(0, 999);
 }

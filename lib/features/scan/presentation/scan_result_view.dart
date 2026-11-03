@@ -206,6 +206,7 @@ class _Candidate extends StatelessWidget {
                 child: DailyLimitOffer(
                   limit: dailyLimit,
                   adScansLeft: adScansLeft,
+                  onPremium: () => context.push('/pro'),
                   onWatchAd: onWatchAd,
                 ),
               ),
