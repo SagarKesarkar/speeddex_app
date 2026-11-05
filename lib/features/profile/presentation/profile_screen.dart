@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/providers.dart';
+import '../../../core/config/social_links.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/theme/sd_colors.dart';
 import '../../../core/theme/sd_tokens.dart';
@@ -451,6 +453,12 @@ class _Settings extends ConsumerWidget {
     if (ok == true) await ref.read(authControllerProvider.notifier).signOut();
   }
 
+  /// Opens [url] in the Instagram or Facebook app if installed, else the browser.
+  Future<void> _open(BuildContext context, Uri url) async {
+    final opened = await launchUrl(url, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) showSdSnack(context, 'Couldn’t open the link.');
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return SdPanel(
@@ -475,6 +483,16 @@ class _Settings extends ConsumerWidget {
             icon: Icons.description_outlined,
             label: 'Terms of use',
             onTap: () => showLegalSheet(context, 'Terms of Use'),
+          ),
+          _SettingRow(
+            icon: Icons.camera_alt_outlined,
+            label: 'Follow us on Instagram',
+            onTap: () => _open(context, SocialLinks.instagram),
+          ),
+          _SettingRow(
+            icon: Icons.facebook_rounded,
+            label: 'Follow us on Facebook',
+            onTap: () => _open(context, SocialLinks.facebook),
           ),
           _SettingRow(
             icon: Icons.logout_rounded,

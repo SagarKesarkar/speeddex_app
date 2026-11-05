@@ -1,0 +1,10 @@
+# Copy to android/key.properties (git-ignored) and fill in. Never commit the
+# real file or the keystore, and back up both somewhere safe. With Play App
+# Signing, a lost upload key can be reset through Play Console.
+#
+# Create the keystore once (keytool comes with Android Studio's JDK):
+#   keytool -genkey -v -keystore C:/Users/<you>/speeddex-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+storePassword=
+keyPassword=
+keyAlias=upload
+storeFile=C:/Users/<you>/speeddex-upload.jks

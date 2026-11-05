@@ -57,7 +57,9 @@ class RankingScreen extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: SdSpace.gutter),
               children: [
-                for (final s in LeaderboardScope.values)
+                // Nearby stays hidden until the app asks for location: without
+                // it the tab could only ever show "needs location".
+                for (final s in LeaderboardScope.values.where((s) => s != LeaderboardScope.nearby))
                   Padding(
                     padding: const EdgeInsets.only(right: SdSpace.sm),
                     child: SdFilterChip(

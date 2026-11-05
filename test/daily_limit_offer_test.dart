@@ -17,12 +17,12 @@ void main() {
     expect(find.text('OH NO!'), findsOneWidget);
     expect(find.text('DAILY LIMIT REACHED'), findsOneWidget);
     expect(find.textContaining('added 5 cars today'), findsOneWidget);
-    expect(find.textContaining('Go Premium or watch a rewarded ad'), findsOneWidget);
+    expect(find.textContaining('Get SpeedDex Pro or watch a rewarded ad'), findsOneWidget);
 
     // Neither exists yet, so tapping says so rather than pretending to work.
-    await tester.tap(find.text('GO PREMIUM'));
+    await tester.tap(find.text('GET SPEEDDEX PRO'));
     await tester.pump();
-    expect(find.text('Premium isn’t available yet. It’s coming soon.'), findsOneWidget);
+    expect(find.text('SpeedDex Pro isn’t available yet. It’s coming soon.'), findsOneWidget);
   });
 
   testWidgets('hands both choices to the callers once they exist', (tester) async {
@@ -31,7 +31,7 @@ void main() {
       tester,
       DailyLimitOffer(onPremium: () => taps.add('premium'), onWatchAd: () async => taps.add('ad')),
     );
-    await tester.tap(find.text('GO PREMIUM'));
+    await tester.tap(find.text('GET SPEEDDEX PRO'));
     await tester.tap(find.text('WATCH REWARD AD · +1 SCAN'));
     expect(taps, ['premium', 'ad']);
     await tester.pump();
