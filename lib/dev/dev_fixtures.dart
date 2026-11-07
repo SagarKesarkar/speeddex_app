@@ -6,6 +6,9 @@ import '../domain/social.dart';
 /// used only so the UI can be exercised before the catalog API exists.
 /// Tier assignments follow the examples given in spec §6.6.
 abstract final class DevFixtures {
+  /// The website's catalogue photos (Wikimedia Commons, credited on the site).
+  static const _photos = 'https://speeddexgame.com/catalog/variants';
+
   static CarCard car(
     String id, {
     required String make,
@@ -25,6 +28,12 @@ abstract final class DevFixtures {
     required double condition,
     String? location,
     int daysAgo = 0,
+
+    /// A catalogue photo of this model, e.g. '15-front'; none shows the silhouette.
+    String? photo,
+
+    /// The colour of the car in [photo].
+    String color = 'Graphite Grey',
   }) => CarCard(
     // Catalogue entries; DevStore derives per-owner card instances from these.
     id: id,
@@ -46,11 +55,12 @@ abstract final class DevFixtures {
     ),
     hidden: hidden,
     // Sample capture facts; real ones come from the recogniser.
-    capture: const CaptureFacts(color: 'Graphite Grey', aiConfidence: 0.92),
+    capture: CaptureFacts(color: color, aiConfidence: 0.92),
     xp: xp,
     conditionRating: condition,
     locationLabel: location,
     capturedAt: DateTime.now().subtract(Duration(days: daysAgo, hours: daysAgo * 3)),
+    imageUrl: photo == null ? null : '$_photos/$photo.jpg',
   );
 
   static final catalogue = <CarCard>[
@@ -73,6 +83,8 @@ abstract final class DevFixtures {
       condition: 7.8,
       location: 'Pune, IN',
       daysAgo: 9,
+      photo: '886-front',
+      color: 'White',
     ),
     car(
       '102',
@@ -93,6 +105,8 @@ abstract final class DevFixtures {
       condition: 8.4,
       location: 'Mumbai, IN',
       daysAgo: 6,
+      photo: '279-front',
+      color: 'Yellow',
     ),
     car(
       '203',
@@ -113,6 +127,8 @@ abstract final class DevFixtures {
       condition: 8.9,
       location: 'Bengaluru, IN',
       daysAgo: 4,
+      photo: '15-front',
+      color: 'Blue',
     ),
     car(
       '305',
@@ -133,6 +149,8 @@ abstract final class DevFixtures {
       condition: 9.1,
       location: 'Delhi, IN',
       daysAgo: 3,
+      photo: '221-left',
+      color: 'White',
     ),
     car(
       '306',
@@ -171,6 +189,8 @@ abstract final class DevFixtures {
       condition: 9.4,
       location: 'Mumbai, IN',
       daysAgo: 2,
+      photo: '647-left',
+      color: 'Black',
     ),
     car(
       '408',
@@ -190,6 +210,8 @@ abstract final class DevFixtures {
       xp: 640,
       condition: 9.0,
       location: 'Hyderabad, IN',
+      photo: '404-front',
+      color: 'Black',
     ),
     car(
       '509',
@@ -213,20 +235,23 @@ abstract final class DevFixtures {
     car(
       '610',
       make: 'Porsche',
-      model: '911 GT3',
-      years: '1999–present',
-      category: 'Track',
+      model: '911 Turbo',
+      variant: '930',
+      years: '1975–1989',
+      category: 'Sports',
       origin: 'Germany',
       body: BodyStyle.coupe,
       tier: RarityTier.rare,
-      mph: 198,
-      hp: 502,
-      zeroSixty: 3.2,
-      engine: '4.0L Flat-6',
-      hidden: const HiddenSpecs(torqueNm: 469, curbWeightKg: 1433, drivetrain: 'RWD', msrp: 182000),
+      mph: 160,
+      hp: 300,
+      zeroSixty: 5.0,
+      engine: '3.3L Turbo Flat-6',
+      hidden: const HiddenSpecs(torqueNm: 412, curbWeightKg: 1335, drivetrain: 'RWD', msrp: 45000),
       xp: 1300,
       condition: 9.6,
       location: 'Chennai, IN',
+      photo: '732-front',
+      color: 'Dark Blue',
     ),
     car(
       '711',
@@ -246,6 +271,8 @@ abstract final class DevFixtures {
       xp: 2200,
       condition: 9.3,
       location: 'Mumbai, IN',
+      photo: '387-front',
+      color: 'Lime Green',
     ),
     car(
       '812',
@@ -269,6 +296,8 @@ abstract final class DevFixtures {
       xp: 4000,
       condition: 9.8,
       location: 'Dubai, AE',
+      photo: '112-front',
+      color: 'Blue',
     ),
     car(
       '913',
@@ -307,6 +336,8 @@ abstract final class DevFixtures {
       condition: 7.2,
       location: 'Pune, IN',
       daysAgo: 1,
+      photo: '545-front',
+      color: 'Silver',
     ),
     car(
       '315',
@@ -325,6 +356,8 @@ abstract final class DevFixtures {
       xp: 200,
       condition: 8.0,
       location: 'Nashik, IN',
+      photo: '899-front',
+      color: 'Silver',
     ),
   ];
 

@@ -6,11 +6,9 @@ import '../../core/theme/sd_colors.dart';
 import '../../core/theme/sd_tokens.dart';
 import '../../core/theme/sd_typography.dart';
 import '../../core/widgets/brand.dart';
-import '../../core/widgets/car_visual.dart';
 import '../../core/widgets/sd_button.dart';
 import '../../core/widgets/sd_primitives.dart';
 import '../../dev/dev_fixtures.dart';
-import '../../domain/car_card.dart';
 import '../../domain/rarity_tier.dart';
 import '../auth/application/auth_controller.dart';
 import '../auth/presentation/legal_sheet.dart';
@@ -235,7 +233,8 @@ class _HeroSlide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final card = DevFixtures.byId('610');
+    // The Bugatti Chiron: its catalogue photo is exactly this car.
+    final card = DevFixtures.byId('812');
     return _SlideFrame(
       title: 'Spot it. Keep it.',
       body:
@@ -281,7 +280,8 @@ class _CaptureSlide extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              const CarSilhouette(body: BodyStyle.suv, tier: RarityTier.royal),
+              // Lamborghini Urus by Cutlass, CC0, Wikimedia Commons.
+              Image.asset('assets/brand/onboarding-scan.jpg', fit: BoxFit.cover),
               Center(
                 child: FractionallySizedBox(
                   widthFactor: 0.86,
