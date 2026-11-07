@@ -1,11 +1,13 @@
 import 'dart:typed_data';
 
+import '../core/location/location_service.dart';
 import '../domain/car_card.dart';
 import '../domain/goals.dart';
 import '../domain/premium.dart';
 import '../domain/profile.dart';
 import '../domain/rarity_tier.dart';
 import '../domain/social.dart';
+import '../domain/spots.dart';
 
 /// Integration boundary between the UI and the SpeedDex API (spec §5).
 ///
@@ -248,11 +250,13 @@ class AddResult {
 abstract interface class CaptureRepository {
   /// POST /v1/captures/upload-session → PUT signed URL → POST identify.
   /// [thumbnail], the small copy for Garage grids, is uploaded too when
-  /// given; a failed thumbnail upload doesn't stop the scan.
+  /// given; a failed thumbnail upload doesn't stop the scan. [location] is
+  /// where the photo was taken; the server keeps it private.
   Future<IdentifyOutcome> identify(
     Uint8List jpegBytes, {
     required String localPath,
     Uint8List? thumbnail,
+    GeoFix? location,
   });
 
   /// POST /v1/captures/{id}/add-to-garage (or replace-card when [replace]).
@@ -317,6 +321,12 @@ abstract interface class ProfileRepository {
     required String productId,
     required String purchaseRef,
   });
+}
+
+abstract interface class SpotsRepository {
+  /// POST /v1/spots/nearby — areas of about 500 m where cars were caught
+  /// within [radiusKm] of [around], newest first.
+  Future<List<CarSpot>> nearby(GeoPoint around, {double radiusKm = 10});
 }
 
 abstract interface class GeoRepository {

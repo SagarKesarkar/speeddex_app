@@ -3,12 +3,14 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import '../../core/errors/app_failure.dart';
+import '../../core/location/location_service.dart';
 import '../../core/security/token_store.dart';
 import '../../domain/car_card.dart';
 import '../../domain/goals.dart';
 import '../../domain/premium.dart';
 import '../../domain/profile.dart';
 import '../../domain/social.dart';
+import '../../domain/spots.dart';
 import '../repositories.dart';
 import 'api_client.dart';
 import 'json_mappers.dart';
@@ -200,6 +202,24 @@ class HttpAdsRepository implements AdsRepository {
   }
 }
 
+class HttpSpotsRepository implements SpotsRepository {
+  HttpSpotsRepository(this._api, this._m);
+  final ApiClient _api;
+  final ApiMappers _m;
+
+  @override
+  Future<List<CarSpot>> nearby(GeoPoint around, {double radiusKm = 10}) async {
+    final b = _j(
+      await _api.post('/spots/nearby', {
+        'latitude': around.latitude,
+        'longitude': around.longitude,
+        'radiusKm': radiusKm,
+      }),
+    );
+    return [for (final s in (b['spots'] as List? ?? const [])) _m.spot(_j(s))];
+  }
+}
+
 class HttpRankingRepository implements RankingRepository {
   HttpRankingRepository(this._api, this._m);
   final ApiClient _api;
@@ -300,6 +320,7 @@ class HttpCaptureRepository implements CaptureRepository {
     Uint8List jpegBytes, {
     required String localPath,
     Uint8List? thumbnail,
+    GeoFix? location,
   }) async {
     var captureId = _uploaded[localPath];
     if (captureId == null) {
@@ -308,6 +329,12 @@ class HttpCaptureRepository implements CaptureRepository {
           'capturedAt': DateTime.now().toUtc().toIso8601String(),
           'cameraSource': 'native_camera',
           'clientNonce': _nonce(),
+          if (location != null) ...{
+            'latitude': location.point.latitude,
+            'longitude': location.point.longitude,
+            if (location.accuracyMeters != null)
+              'accuracyMeters': location.accuracyMeters!.clamp(0, 100000),
+          },
         }),
       );
       captureId = '${session['captureId']}';

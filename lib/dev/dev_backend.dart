@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import '../core/errors/app_failure.dart';
+import '../core/location/location_service.dart';
 import '../core/security/token_store.dart';
 import '../data/repositories.dart';
 import '../domain/car_card.dart';
@@ -10,6 +11,7 @@ import '../domain/premium.dart';
 import '../domain/profile.dart';
 import '../domain/rarity_tier.dart';
 import '../domain/social.dart';
+import '../domain/spots.dart';
 import 'dev_fixtures.dart';
 
 /// In-memory stand-in for the SpeedDex backend, shared by all development
@@ -327,7 +329,7 @@ class DevCardsRepository implements CardsRepository {
   DevCardsRepository(this._store);
   final DevStore _store;
 
-  /// Demo cards are illustrations, not photos, so there are none to show.
+  /// Demo cards have a single catalogue photo each, no gallery.
   @override
   Future<List<ModelPhoto>> modelPhotos(String cardId) async => const [];
 
@@ -357,6 +359,53 @@ class DevCardsRepository implements CardsRepository {
       card: card.copyWith(hiddenUnlocked: true),
       coinsCharged: DevStore.unlockCost,
     );
+  }
+}
+
+/// Demo spots scattered around wherever the player is, built from the
+/// catalogue cars, so the Radar has something to show without a server.
+class DevSpotsRepository implements SpotsRepository {
+  DevSpotsRepository(this._store);
+  final DevStore _store;
+
+  static const _layout = [
+    // (north km, east km, car ids)
+    (0.4, 0.3, ['711', '812']),
+    (-0.6, 0.9, ['407', '408', '203']),
+    (1.3, -0.7, ['610']),
+    (-1.5, -1.1, ['305', '102']),
+    (2.2, 1.6, ['101', '114', '315']),
+    (-0.2, -2.4, ['408']),
+  ];
+
+  @override
+  Future<List<CarSpot>> nearby(GeoPoint around, {double radiusKm = 10}) async {
+    await _store.latency();
+    final kmPerLng = 111.32 * cos(around.latitude * pi / 180);
+    return [
+      for (final (i, (north, east, ids)) in _layout.indexed)
+        CarSpot(
+          id: 'dev-$i',
+          point: GeoPoint(around.latitude + north / 110.57, around.longitude + east / kmPerLng),
+          distanceKm: double.parse(sqrt(north * north + east * east).toStringAsFixed(1)),
+          lastSeenAt: DateTime.now().subtract(Duration(hours: 1 + i * 5)),
+          sightings: ids.length + i,
+          cars: [
+            for (final (k, id) in ids.indexed)
+              SpotCar(
+                vehicleId: id,
+                make: DevFixtures.byId(id).make,
+                model: DevFixtures.byId(id).model,
+                variant: DevFixtures.byId(id).variant,
+                tier: DevFixtures.byId(id).tier,
+                xp: DevFixtures.byId(id).xp,
+                sightings: 1 + (i + k) % 3,
+                lastSeenAt: DateTime.now().subtract(Duration(hours: 1 + i * 5 + k * 7)),
+                imageUrl: DevFixtures.byId(id).imageUrl,
+              ),
+          ],
+        ),
+    ];
   }
 }
 
@@ -468,6 +517,7 @@ class DevCaptureRepository implements CaptureRepository {
     Uint8List jpegBytes, {
     required String localPath,
     Uint8List? thumbnail,
+    GeoFix? location,
   }) async {
     await _store.latency(2200);
     if (_store._scansToday >= DevStore.dailyScanLimit + _store._extraScans) {

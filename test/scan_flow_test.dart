@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:speeddex/app/providers.dart';
 import 'package:speeddex/core/errors/app_failure.dart';
+import 'package:speeddex/core/location/location_service.dart';
 import 'package:speeddex/data/repositories.dart';
+import 'package:speeddex/domain/spots.dart';
 import 'package:speeddex/features/scan/application/photo_orientation.dart';
 import 'package:speeddex/features/scan/application/photo_pipeline.dart';
 import 'package:speeddex/features/scan/application/scan_controller.dart';
@@ -30,16 +32,35 @@ class _Preparer implements PhotoPreparer {
 class _Captures implements CaptureRepository {
   final sent = <String>[];
   final thumbnails = <Uint8List?>[];
+  final locations = <GeoFix?>[];
 
   @override
   Future<IdentifyOutcome> identify(
     Uint8List jpegBytes, {
     required String localPath,
     Uint8List? thumbnail,
+    GeoFix? location,
   }) async {
     sent.add(localPath);
     thumbnails.add(thumbnail);
+    locations.add(location);
     return const Rejected('Not a car');
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+/// A phone standing in Pune, or with location unavailable when [fix] is null.
+class _Location implements LocationService {
+  _Location(this.fix);
+  final GeoFix? fix;
+  int asked = 0;
+
+  @override
+  Future<GeoFix?> captureFix() async {
+    asked++;
+    return fix;
   }
 
   @override
@@ -51,13 +72,16 @@ void main() {
   late _Preparer preparer;
   late _Captures captures;
   late ProviderContainer c;
+  late _Location location;
 
   setUp(() async {
     dir = await Directory.systemTemp.createTemp('sdx-scan');
     preparer = _Preparer();
     captures = _Captures();
+    location = _Location(const GeoFix(GeoPoint(18.5204, 73.8567), accuracyMeters: 9));
     c = ProviderContainer(
       overrides: [
+        locationServiceProvider.overrideWithValue(location),
         photoPreparerProvider.overrideWithValue(preparer),
         captureRepositoryProvider.overrideWithValue(captures),
       ],
@@ -91,6 +115,33 @@ void main() {
     expect(preparer.calls, [(raw, HeldAs.landscapeLeft)]);
     expect(captures.sent, ['$raw-ready']); // never the original
     expect(captures.thumbnails.single, [7, 7, 7]); // the small copy goes with it
+  });
+
+  test('the capture is tagged with where the shutter fired', () async {
+    final scan = c.read(scanControllerProvider.notifier);
+    scan.captured(await shot());
+    expect(location.asked, 1); // looked up at the shutter, not later
+    await scan.identify();
+    final sent = captures.locations.single!;
+    expect(sent.point.latitude, 18.5204);
+    expect(sent.point.longitude, 73.8567);
+    expect(sent.accuracyMeters, 9);
+  });
+
+  test('without location the capture still goes through, untagged', () async {
+    c.dispose();
+    c = ProviderContainer(
+      overrides: [
+        locationServiceProvider.overrideWithValue(_Location(null)),
+        photoPreparerProvider.overrideWithValue(preparer),
+        captureRepositoryProvider.overrideWithValue(captures),
+      ],
+    );
+    final scan = c.read(scanControllerProvider.notifier);
+    scan.captured(await shot());
+    await scan.identify();
+    expect(captures.sent, hasLength(1));
+    expect(captures.locations.single, isNull);
   });
 
   test('if the privacy check fails nothing is sent, and trying again prepares it again', () async {

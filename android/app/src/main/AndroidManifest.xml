@@ -4,6 +4,10 @@
     <!-- Requested at runtime only when the user opens Scan. -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- Radar and capture tagging: asked for at runtime, only while the app is open. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
     <application
         android:label="SpeedDex"
         android:allowBackup="false"

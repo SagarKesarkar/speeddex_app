@@ -105,6 +105,9 @@ Tests: `test/api_client_test.dart` (transport, refresh, error mapping, the HTTPS
 
 ## Recent behaviour
 
+- Tabs: Feed · **Radar** · Scan · Garage · Profile. Ranking opens from the gold trophy on the Feed header (`/ranking`, full screen with a back button).
+- **Radar** (`features/radar`): a dark map of cars caught nearby (`POST /v1/spots/nearby`). Pins are ~500 m areas coloured by the rarest car caught there; the bottom panel ("You can find these cars here") swipes between areas, nearest first, with Directions to Google Maps. Location is asked for the first time the tab opens; the blue dot follows the player only while the tab is on screen. The map is `flutter_map` on OpenStreetMap's tiles, darkened on the device; for a large audience set a commercial tile server with `--dart-define=MAP_TILE_URL=…`, `MAP_ATTRIBUTION=…` and `MAP_TILE_DARKEN=false` for tiles that are already dark.
+- **Location on capture:** the position is read as the shutter fires (`LocationService.captureFix`, at most 6 s, falling back to a reading under 5 minutes old) and sent with the upload session. Without permission or a fix, the capture goes through untagged. Permission is asked for at most once per app run.
 - The app opens on the **Scan** tab, after launch and after signing in. Android back retraces visited tabs to Scan, and a second press on Scan exits.
 - **Shutter to preview is instant:** the photo is shown as taken (turned upright if the phone was held sideways). Tapping **Identify** runs straightening, compression and the on-device face/plate blur (`photo_pipeline.dart`, "Blurring faces and number plates…"), then uploads. A photo that hasn't been through that step is never sent; if the check fails, nothing is sent and **Try again** runs it again.
 - **Zoom:** pinch on the viewfinder, or tap 1× / 2× / 5× (only those the lens supports, up to 8×). Each camera start resets to 1×.
@@ -141,6 +144,14 @@ Tokens live in `lib/core/theme/`. Shared components: `SdButton`, `SdPanel`,
 skeleton/empty/error states, and `CarVisual`, which shows the capture photo or a
 vector silhouette. No third-party car artwork is bundled.
 
+## Google Play: Data safety (location)
+
+Since the Radar release the app collects location. In Play Console → App content → Data safety:
+
+- **Location → Approximate location** and **Precise location**: *Collected*, not shared. Processed ephemerally: no (it is stored with the capture). Required: no, users can choose (optional permission).
+- Purposes: **App functionality** (tagging catches, the Radar map). Not used for ads or analytics.
+- Everything else stays as declared before. The privacy policy (`Website/pages/privacy.html`, section "Your location") describes this.
+
 ## Security notes
 
 Done in the client:
@@ -148,6 +159,7 @@ Done in the client:
 - HTTPS enforced for `API_BASE_URL` in release builds; `usesCleartextTraffic=false`; `allowBackup=false`. The local-HTTP exception exists only in the debug and profile manifests.
 - Generic login error and neutral password-reset copy (no account enumeration).
 - Camera permission requested only when Scan opens; there is no photo-library path.
+- Location is foreground only (no background permission). Precise positions go to the API, which only ever shows other players a ~500 m area.
 - Discarded captures are deleted from the device cache.
 - Unlocks send an idempotency key per confirmation, so a double tap can't charge twice.
 - User and server text is rendered as plain text only. Comments are trimmed and length-capped.
@@ -165,7 +177,7 @@ The dev backend imitates some of these rules for UI purposes only.
 ## Not yet implemented
 - A notifications inbox screen. The API records likes, comments, follows, moderation results and daily goals (and pushes them).
 - Notification settings in the app. Players can turn notifications off in Android settings.
-- GPS tagging on capture and the Nearby ranking: the API supports both, but the app doesn't request location permission yet.
+- The Nearby ranking: the API supports it, and the app now has location, but the scope is still hidden in Ranking.
 - Coin packs and Garage-slot offers (the SpeedDex Pro subscription is built).
 - Share links.
 - Legal documents: the sheet says they can't be shown yet.

@@ -4,6 +4,7 @@ import '../../domain/premium.dart';
 import '../../domain/profile.dart';
 import '../../domain/rarity_tier.dart';
 import '../../domain/social.dart';
+import '../../domain/spots.dart';
 
 typedef Json = Map<String, dynamic>;
 
@@ -23,6 +24,29 @@ class ApiMappers {
 
   static BodyStyle bodyStyle(String? s) =>
       BodyStyle.values.where((b) => b.name == s).firstOrNull ?? BodyStyle.sedan;
+
+  CarSpot spot(Json j) => CarSpot(
+    id: j['spotId'] as String? ?? '${j['latitude']},${j['longitude']}',
+    point: GeoPoint((j['latitude'] as num).toDouble(), (j['longitude'] as num).toDouble()),
+    distanceKm: _doubleOrNull(j['distanceKm']) ?? 0,
+    lastSeenAt: _date(j['lastSeenAt']),
+    sightings: _int(j['sightings'], 1),
+    cars: [
+      for (final c in (j['cars'] as List? ?? const [])) spotCar((c as Map).cast<String, dynamic>()),
+    ],
+  );
+
+  SpotCar spotCar(Json j) => SpotCar(
+    vehicleId: '${j['vehicleId']}',
+    make: j['make'] as String? ?? '',
+    model: j['model'] as String? ?? '',
+    variant: j['variant'] as String?,
+    tier: RarityTier.tryParse(j['rarity'] as String?) ?? RarityTier.base,
+    xp: _intOrNull(j['xp']),
+    sightings: _int(j['sightings'], 1),
+    lastSeenAt: _date(j['lastSeenAt']),
+    imageUrl: j['imageUrl'] == null ? null : rebaseUrl(j['imageUrl'] as String),
+  );
 
   UserSummary user(Json j) => UserSummary(
     id: '${j['userId']}',

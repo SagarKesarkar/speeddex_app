@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/auth/google_auth.dart';
 import '../core/config/app_config.dart';
+import '../core/location/location_service.dart';
 import '../core/security/token_store.dart';
 import '../data/api/api_client.dart';
 import '../data/api/http_repositories.dart';
@@ -57,6 +58,13 @@ final cardsRepositoryProvider = Provider<CardsRepository>(
 final rankingRepositoryProvider = Provider<RankingRepository>(
   (ref) => _pick(ref, http: HttpRankingRepository.new, dev: DevRankingRepository.new),
 );
+final spotsRepositoryProvider = Provider<SpotsRepository>(
+  (ref) => _pick(ref, http: HttpSpotsRepository.new, dev: DevSpotsRepository.new),
+);
+
+/// Device location: tags captures and centres the Radar map.
+final locationServiceProvider = Provider<LocationService>((_) => GeolocatorLocationService());
+
 final garageRepositoryProvider = Provider<GarageRepository>(
   (ref) => _pick(ref, http: HttpGarageRepository.new, dev: DevGarageRepository.new),
 );

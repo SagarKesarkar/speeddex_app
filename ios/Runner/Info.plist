@@ -13,6 +13,8 @@
 	<string>SpeedDex</string>
 	<key>NSCameraUsageDescription</key>
 	<string>SpeedDex uses the camera to photograph and identify cars you spot.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>SpeedDex tags each car you catch with where you caught it, and shows cars spotted near you on the Radar map. Other players only ever see the area, never your exact spot.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

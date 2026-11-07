@@ -15,6 +15,7 @@ import '../features/profile/presentation/follow_list_screen.dart';
 import '../features/profile/presentation/delete_account_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/profile/presentation/public_profile_screen.dart';
+import '../features/radar/presentation/radar_screen.dart';
 import '../features/ranking/presentation/ranking_screen.dart';
 import '../features/scan/presentation/scan_screen.dart';
 import '../features/shell/app_shell.dart';
@@ -112,6 +113,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ),
       ),
+      // Opened from the trophy button on the Feed header.
+      GoRoute(
+        path: '/ranking',
+        parentNavigatorKey: _rootKey,
+        builder: (_, _) => const RankingScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(shell: shell),
         branches: [
@@ -119,7 +126,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [GoRoute(path: '/feed', builder: (_, _) => const FeedScreen())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/ranking', builder: (_, _) => const RankingScreen())],
+            routes: [GoRoute(path: '/radar', builder: (_, _) => const RadarScreen())],
           ),
           StatefulShellBranch(
             routes: [GoRoute(path: '/scan', builder: (_, _) => const ScanScreen())],

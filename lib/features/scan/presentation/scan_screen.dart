@@ -155,9 +155,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
     final c = _camera;
     if (c == null) return;
     _camera = null;
+    // Leave "ready" in the same frame the camera goes: a build in between
+    // would find no camera (e.g. when a system dialog pauses the app).
+    if (mounted) setState(() => _cam = _Cam.off);
     await _tilt?.cancel();
     _tilt = null;
-    if (mounted) setState(() => _cam = _Cam.off);
     await c.dispose();
   }
 

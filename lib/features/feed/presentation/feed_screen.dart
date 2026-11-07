@@ -58,6 +58,7 @@ class FeedScreen extends ConsumerWidget {
         children: [
           TabHeader(
             title: 'Feed',
+            action: RankingButton(onTap: () => context.push('/ranking')),
             trailing: SdSegmented<FeedMode>(
               values: FeedMode.values,
               selected: state.mode,

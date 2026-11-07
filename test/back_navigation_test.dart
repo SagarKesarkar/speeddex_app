@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:speeddex/features/shell/app_shell.dart';
 
-const _names = ['Feed', 'Ranking', 'Scan', 'Garage', 'Profile'];
+const _names = ['Feed', 'Radar', 'Scan', 'Garage', 'Profile'];
 
 /// The real shell over stand-in tab screens.
 GoRouter _router() => GoRouter(
@@ -84,10 +84,10 @@ void main() {
   });
 
   testWidgets('back from a tab reached without history goes to Scan', (tester) async {
-    final router = _router()..go('/ranking');
+    final router = _router()..go('/radar');
     await tester.pumpWidget(ProviderScope(child: MaterialApp.router(routerConfig: router)));
     await tester.pumpAndSettle();
-    expect(find.text('Ranking screen'), findsOneWidget);
+    expect(find.text('Radar screen'), findsOneWidget);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.text('Scan screen'), findsOneWidget);

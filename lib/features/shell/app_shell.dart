@@ -10,8 +10,8 @@ import '../../core/theme/sd_typography.dart';
 import '../../core/widgets/sd_primitives.dart';
 import '../scan/application/scan_controller.dart';
 
-/// Authenticated shell: five tabs in spec order — Feed, Ranking, Scan,
-/// Garage, Profile — each keeping its own navigation stack.
+/// Authenticated shell: five tabs — Feed, Radar, Scan, Garage, Profile —
+/// each keeping its own navigation stack. Ranking opens from the Feed header.
 ///
 /// Android back walks back through the tabs the user visited, then to Scan
 /// (home), and only closes the app on a second press from Scan.
@@ -27,7 +27,7 @@ class AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<AppShell> {
   static const _tabs = [
     (Icons.dynamic_feed_outlined, Icons.dynamic_feed_rounded, 'Feed'),
-    (Icons.leaderboard_outlined, Icons.leaderboard_rounded, 'Ranking'),
+    (Icons.radar_outlined, Icons.radar_rounded, 'Radar'),
     (Icons.center_focus_strong_outlined, Icons.center_focus_strong_rounded, 'Scan'),
     (Icons.garage_outlined, Icons.garage_rounded, 'Garage'),
     (Icons.badge_outlined, Icons.badge_rounded, 'Profile'),
@@ -256,11 +256,24 @@ class _ScanTab extends StatelessWidget {
 
 /// Large tab title with coin balance; shared by every tab root.
 class TabHeader extends ConsumerWidget {
-  const TabHeader({super.key, required this.title, this.trailing, this.subtitle});
+  const TabHeader({
+    super.key,
+    required this.title,
+    this.trailing,
+    this.subtitle,
+    this.leading,
+    this.action,
+  });
 
   final String title;
   final String? subtitle;
   final Widget? trailing;
+
+  /// Before the title, e.g. a back button on a pushed screen.
+  final Widget? leading;
+
+  /// Shown at the end instead of the coin balance.
+  final Widget? action;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -271,6 +284,7 @@ class TabHeader extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          if (leading != null) ...[leading!, const SizedBox(width: SdSpace.xs)],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,8 +314,42 @@ class TabHeader extends ConsumerWidget {
           ),
           ?trailing,
           if (trailing != null) const SizedBox(width: SdSpace.sm),
-          CoinPill(coins: coins, onTap: () => context.go('/profile')),
+          action ?? CoinPill(coins: coins, onTap: () => context.go('/profile')),
         ],
+      ),
+    );
+  }
+}
+
+/// Gold trophy in the Feed header: opens the leaderboard.
+class RankingButton extends StatelessWidget {
+  const RankingButton({super.key, required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Ranking',
+      child: Semantics(
+        button: true,
+        label: 'Ranking',
+        excludeSemantics: true,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: SdColors.surfaceRaised,
+              border: Border.all(color: SdColors.goldDeep.withValues(alpha: 0.6)),
+              boxShadow: [BoxShadow(color: SdColors.gold.withValues(alpha: 0.18), blurRadius: 10)],
+            ),
+            child: const Icon(Icons.emoji_events_rounded, size: 19, color: SdColors.gold),
+          ),
+        ),
       ),
     );
   }

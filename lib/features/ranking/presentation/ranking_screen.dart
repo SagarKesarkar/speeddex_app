@@ -43,75 +43,84 @@ class RankingScreen extends ConsumerWidget {
     final ctrl = ref.read(_queryProvider.notifier);
     final async = ref.watch(_leaderboardProvider);
 
-    return SafeArea(
-      bottom: false,
-      child: Column(
-        children: [
-          const TabHeader(
-            title: 'Ranking',
-            subtitle: 'Ranked by XP. Ties go to whoever got there first.',
-          ),
-          SizedBox(
-            height: 40,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: SdSpace.gutter),
-              children: [
-                // Nearby stays hidden until the app asks for location: without
-                // it the tab could only ever show "needs location".
-                for (final s in LeaderboardScope.values.where((s) => s != LeaderboardScope.nearby))
-                  Padding(
-                    padding: const EdgeInsets.only(right: SdSpace.sm),
-                    child: SdFilterChip(
-                      label: s.label,
-                      selected: q.scope == s,
-                      onTap: () => ctrl.setScope(s),
-                    ),
-                  ),
-              ],
+    return Scaffold(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            TabHeader(
+              leading: IconButton(
+                tooltip: 'Back',
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: () => context.canPop() ? context.pop() : context.go('/feed'),
+              ),
+              title: 'Ranking',
+              subtitle: 'Ranked by XP. Ties go to whoever got there first.',
             ),
-          ),
-          const SizedBox(height: SdSpace.md),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: SdSpace.gutter),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: SdSegmented<LeaderboardPeriod>(
-                values: LeaderboardPeriod.values,
-                selected: q.period,
-                labelOf: (p) => p.label,
-                onChanged: ctrl.setPeriod,
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: SdSpace.gutter),
+                children: [
+                  // Nearby stays hidden until the app asks for location: without
+                  // it the tab could only ever show "needs location".
+                  for (final s in LeaderboardScope.values.where(
+                    (s) => s != LeaderboardScope.nearby,
+                  ))
+                    Padding(
+                      padding: const EdgeInsets.only(right: SdSpace.sm),
+                      child: SdFilterChip(
+                        label: s.label,
+                        selected: q.scope == s,
+                        onTap: () => ctrl.setScope(s),
+                      ),
+                    ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: SdSpace.md),
-          Expanded(
-            child: async.when(
-              skipLoadingOnReload: false,
-              loading: () => const _RankingSkeleton(),
-              error: (e, _) => switch (e) {
-                _ when q.scope == LeaderboardScope.nearby => SdEmptyState(
-                  icon: Icons.near_me_disabled_outlined,
-                  title: 'Nearby needs location',
-                  message:
-                      '${e.userMessage} You can still compare yourself by '
-                      'country or city.',
-                  actionLabel: 'Show world',
-                  onAction: () => ctrl.setScope(LeaderboardScope.world),
+            const SizedBox(height: SdSpace.md),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: SdSpace.gutter),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: SdSegmented<LeaderboardPeriod>(
+                  values: LeaderboardPeriod.values,
+                  selected: q.period,
+                  labelOf: (p) => p.label,
+                  onChanged: ctrl.setPeriod,
                 ),
-                RequestFailure(code: 'REGION_REQUIRED') => SdEmptyState(
-                  icon: Icons.place_outlined,
-                  title: 'Set your region',
-                  message: e.userMessage,
-                  actionLabel: 'Go to Profile',
-                  onAction: () => context.go('/profile'),
-                ),
-                _ => SdErrorState(error: e, onRetry: () => ref.invalidate(_leaderboardProvider)),
-              },
-              data: (page) => _Board(page: page),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: SdSpace.md),
+            Expanded(
+              child: async.when(
+                skipLoadingOnReload: false,
+                loading: () => const _RankingSkeleton(),
+                error: (e, _) => switch (e) {
+                  _ when q.scope == LeaderboardScope.nearby => SdEmptyState(
+                    icon: Icons.near_me_disabled_outlined,
+                    title: 'Nearby needs location',
+                    message:
+                        '${e.userMessage} You can still compare yourself by '
+                        'country or city.',
+                    actionLabel: 'Show world',
+                    onAction: () => ctrl.setScope(LeaderboardScope.world),
+                  ),
+                  RequestFailure(code: 'REGION_REQUIRED') => SdEmptyState(
+                    icon: Icons.place_outlined,
+                    title: 'Set your region',
+                    message: e.userMessage,
+                    actionLabel: 'Go to Profile',
+                    onAction: () => context.go('/profile'),
+                  ),
+                  _ => SdErrorState(error: e, onRetry: () => ref.invalidate(_leaderboardProvider)),
+                },
+                data: (page) => _Board(page: page),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

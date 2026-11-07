@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers.dart';
 import '../../../core/errors/app_failure.dart';
+import '../../../core/location/location_service.dart';
 import '../../../data/repositories.dart';
 import '../../feed/application/feed_controller.dart';
 import 'photo_orientation.dart';
@@ -89,8 +90,14 @@ class ScanController extends Notifier<ScanState> {
   @override
   ScanState build() => const ScanFraming();
 
-  void captured(String path, {HeldAs held = HeldAs.portrait}) =>
-      state = ScanPreview(path, held: held);
+  /// Where the last photo was taken, looked up as the shutter fires so the
+  /// fix is ready by the time the photo is sent.
+  Future<GeoFix?>? _where;
+
+  void captured(String path, {HeldAs held = HeldAs.portrait}) {
+    _where = ref.read(locationServiceProvider).captureFix();
+    state = ScanPreview(path, held: held);
+  }
 
   /// Discards the pending still and returns to the viewfinder.
   Future<void> retake() async {
@@ -131,6 +138,7 @@ class ScanController extends Notifier<ScanState> {
             bytes,
             localPath: path,
             thumbnail: await ref.read(photoPreparerProvider).thumbnail(bytes),
+            location: await _where,
           );
       state = switch (outcome) {
         Identified() => ScanResult(path, outcome),
